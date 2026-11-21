@@ -24,8 +24,6 @@
   --bg:#EDF1EF; --surface:#FAFCFB; --sunk:#E3E9E6; --ink:#17232A; --muted:#58686C; --line:#D0D9D6;
   --accent:#1D5C55; --accent-ink:#FFFFFF; --accent-soft:#D5E6E2; --gold:#9C6F17;
   --hl-y:#FBE7A1; --hl-g:#D2ECC0; --hl-b:#C9E1F6; --hl-p:#F6D1DC;
-  --ev-mission:#1C7769; --ev-worship:#3D4FB0; --ev-serve:#B87814; --ev-edu:#4A8427; --ev-family:#A8435F;
-  --ev-school:#6A4FA3; --ev-job:#B83A2E; --ev-meet:#8A5A3C; --ev-kin:#2F7891; --ev-life:#5D6B78; --ev-fellow:#A23C8F;
   --danger:#B3261E; --sun:#C03636; --sat:#2C66AE;
   --f-scripture:"Gowun Batang","Nanum Myeongjo","AppleMyungjo",serif;
   --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -35,16 +33,12 @@
   --bg:#10171A; --surface:#172126; --sunk:#0C1215; --ink:#E2EBE9; --muted:#91A2A4; --line:#29373B;
   --accent:#6BC0B0; --accent-ink:#0B1917; --accent-soft:#1D3834; --gold:#DDB257;
   --hl-y:#5A4A12; --hl-g:#2C4820; --hl-b:#1E3B55; --hl-p:#552638;
-  --ev-mission:#49BAA9; --ev-worship:#8A99EE; --ev-serve:#E3A647; --ev-edu:#84C15A; --ev-family:#DE7D9E;
-  --ev-school:#B39AE8; --ev-job:#F08A7E; --ev-meet:#D3A07E; --ev-kin:#6EC2DD; --ev-life:#A3B1BE; --ev-fellow:#E08BD0;
   --danger:#F0807A; --sun:#EE8888; --sat:#7DAEEC; color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#10171A; --surface:#172126; --sunk:#0C1215; --ink:#E2EBE9; --muted:#91A2A4; --line:#29373B;
   --accent:#6BC0B0; --accent-ink:#0B1917; --accent-soft:#1D3834; --gold:#DDB257;
   --hl-y:#5A4A12; --hl-g:#2C4820; --hl-b:#1E3B55; --hl-p:#552638;
-  --ev-mission:#49BAA9; --ev-worship:#8A99EE; --ev-serve:#E3A647; --ev-edu:#84C15A; --ev-family:#DE7D9E;
-  --ev-school:#B39AE8; --ev-job:#F08A7E; --ev-meet:#D3A07E; --ev-kin:#6EC2DD; --ev-life:#A3B1BE; --ev-fellow:#E08BD0;
   --danger:#F0807A; --sun:#EE8888; --sat:#7DAEEC; color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -63,7 +57,7 @@ a{color:var(--accent)}
 .brand b{font-family:var(--f-scripture);font-size:22px;font-weight:700;letter-spacing:.02em}
 .sync{font-size:12px;color:var(--muted)}
 .sync.err{color:var(--danger)}
-.tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;margin-top:10px;padding:4px;background:var(--sunk);border-radius:12px}
+.tabs{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px;padding:4px;background:var(--sunk);border-radius:12px}
 .tabs button{border:0;background:transparent;padding:9px 0;border-radius:9px;font-weight:500;color:var(--muted);font-size:14px;white-space:nowrap}
 .qrow{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:8px}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .08)}
@@ -186,38 +180,6 @@ details.answered-box summary{cursor:pointer;font-size:13px;color:var(--muted);pa
 .res .txt{white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .res mark{background:var(--hl-y);color:inherit;border-radius:2px}
 
-/* calendar */
-.cal-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.cal-head h1{font-family:var(--f-scripture);font-size:24px;margin-right:auto;font-variant-numeric:tabular-nums}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
-.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c);margin-right:5px;vertical-align:-1px}
-.grid-wrap{overflow-x:auto}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line);background:var(--surface);border-radius:var(--r);overflow:hidden}
-.cal .wd{padding:6px 0;text-align:center;font-size:12px;color:var(--muted);border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--sunk)}
-.cal .wd.su{color:var(--sun)} .cal .wd.sa{color:var(--sat)}
-.day{min-height:86px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px;display:flex;flex-direction:column;gap:2px;text-align:left;background:transparent;border-top:0;border-left:0;min-width:0}
-.day.out{background:var(--sunk);opacity:.6}
-.day .n{font-size:12.5px;font-variant-numeric:tabular-nums;width:24px;height:24px;display:grid;place-items:center;border-radius:50%}
-.day.su .n{color:var(--sun)} .day.sa .n{color:var(--sat)}
-.day.hol .n{color:var(--sun);font-weight:600}
-.day.sa{background:color-mix(in srgb,var(--sat) 5%,transparent)} .day.su,.day.hol{background:color-mix(in srgb,var(--sun) 5%,transparent)}
-.day .hn{display:block;font-size:10.5px;line-height:1.3;color:var(--sun);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:2px}
-.hday{font-family:var(--f-ui);font-size:13px;font-weight:500;color:var(--sun);margin-left:8px}
-.holnote{font-size:12px;color:var(--muted)}
-@media (max-width:540px){.day .hn{font-size:9.5px;padding-left:0}}
-.day.today .n{background:var(--accent);color:var(--accent-ink)}
-.day.sel{box-shadow:inset 0 0 0 2px var(--accent)}
-.pill{display:block;font-size:11.5px;line-height:1.5;border-radius:4px;padding:0 5px;color:#fff;background:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.more{font-size:11px;color:var(--muted);padding-left:3px}
-@media (max-width:540px){.day{min-height:58px;padding:3px}.pill{height:5px;padding:0;font-size:0}.day .n{font-size:12px;width:22px;height:22px}}
-.evlist{display:flex;flex-direction:column;gap:8px}
-.ev{display:grid;grid-template-columns:4px 1fr auto;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;text-align:left;width:100%}
-.ev .bar{align-self:stretch;border-radius:2px;background:var(--c)}
-.ev .t{font-weight:600}
-.ev .when{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.ev .memo-t{font-size:13px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
-.ev .cat{font-size:12px;color:var(--c);font-weight:600;white-space:nowrap}
-
 /* dialog */
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
 dialog::backdrop{background:rgb(10 16 18 / .45)}
@@ -249,9 +211,6 @@ dialog::backdrop{background:rgb(10 16 18 / .45)}
 .bigtext{min-height:360px!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* app additions */
-:root{--ev-etc:#6F6630}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ev-etc:#CFC27A}}
-:root[data-theme="dark"]{--ev-etc:#CFC27A}
 #login{min-height:80dvh;display:grid;place-items:center}
 #login form{width:min(380px,100%);display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px}
 #login h1{font-family:var(--f-scripture);font-size:28px}
@@ -284,7 +243,6 @@ dialog::backdrop{background:rgb(10 16 18 / .45)}
       <button role="tab" data-tab="free" aria-selected="false">메모</button>
       <button role="tab" data-tab="pray" aria-selected="false">기도</button>
       <button role="tab" data-tab="search" aria-selected="false">찾기</button>
-      <button role="tab" data-tab="cal" aria-selected="false">일정</button>
     </nav>
   </div>
   <div id="notice" class="notice" hidden></div>
@@ -295,7 +253,6 @@ dialog::backdrop{background:rgb(10 16 18 / .45)}
   <section class="panel" id="p-free" hidden></section>
   <section class="panel" id="p-pray" hidden></section>
   <section class="panel" id="p-search" hidden></section>
-  <section class="panel" id="p-cal" hidden></section>
   <div class="backup" id="backup">
     <span style="margin-right:auto">기록은 서버에 저장되고, 인터넷이 끊겨도 이 기기에 남아 있다가 다시 연결되면 올라가요.</span>
     <button class="btn" id="bk-out">백업 파일 저장</button>
@@ -316,29 +273,6 @@ dialog::backdrop{background:rgb(10 16 18 / .45)}
   </div>
 </div>
 
-<dialog id="evdlg">
-  <form class="dlg" id="evform">
-    <h2 id="ev-h">일정 추가</h2>
-    <div><label class="lbl" for="ev-title">일정명</label><input class="field" id="ev-title" autocomplete="off" placeholder="예) 청년부 금요기도회"></div>
-    <div><p class="lbl">카테고리</p><div class="catpick" id="ev-cat"></div></div>
-    <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ev-allday"> 하루 종일</label>
-    <div class="row2">
-      <div><label class="lbl" for="ev-sd">시작일</label><input class="field" type="date" id="ev-sd"></div>
-      <div class="tfield"><label class="lbl" for="ev-st">시작 시간</label><input class="field" type="time" id="ev-st"></div>
-      <div><label class="lbl" for="ev-ed">종료일</label><input class="field" type="date" id="ev-ed"></div>
-      <div class="tfield"><label class="lbl" for="ev-et">종료 시간</label><input class="field" type="time" id="ev-et"></div>
-    </div>
-    <div><label class="lbl" for="ev-place">장소</label><input class="field" id="ev-place" autocomplete="off"></div>
-    <div><label class="lbl" for="ev-memo">기타 메모</label><textarea class="field" id="ev-memo" style="min-height:120px"></textarea></div>
-    <p class="err" id="ev-err" hidden></p>
-    <div class="dlg-actions">
-      <button type="button" class="btn danger left" id="ev-del" hidden>삭제</button>
-      <button type="button" class="btn" id="ev-cancel">취소</button>
-      <button type="submit" class="btn primary">저장</button>
-    </div>
-  </form>
-</dialog>
-
 <script>
 (() => {
 "use strict";
@@ -353,10 +287,6 @@ const NTYPES = {
 };
 const PIN_H = "339.346.402.346";
 const pinHash = s => [...s].map(c=>c.charCodeAt(0)*7+3).join(".");
-const EVCATS = [{k:"mission",n:"선교"},{k:"worship",n:"예배"},{k:"serve",n:"섬김"},{k:"edu",n:"교육"},{k:"family",n:"경조사"},{k:"fellow",n:"교제"}];
-const GKCATS = [{k:"school",n:"학교"},{k:"job",n:"취업"},{k:"meet",n:"약속"},{k:"kin",n:"가족"},{k:"life",n:"개인"},{k:"etc",n:"기타"}];
-const ALLEV = [...EVCATS, ...GKCATS];
-let showGk = true; try { showGk = localStorage.getItem("jubasi-show-gk") !== "0"; } catch(_){}
 const PGROUPS = [{k:"personal",n:"개인 기도제목"},{k:"family",n:"가족 기도제목"},{k:"church",n:"교회 기도제목"},{k:"nation",n:"나라 기도제목"},{k:"intercede",n:"중보기도"}];
 const SRC = [{k:"krv",n:"개역개정"},{k:"niv",n:"NIV"},{k:"klb",n:"현대인의 성경"}];
 const NOTES = [
@@ -367,26 +297,6 @@ const NOTES = [
 ];
 const BOOKS = {"창세기":"Genesis","출애굽기":"Exodus","레위기":"Leviticus","민수기":"Numbers","신명기":"Deuteronomy","여호수아":"Joshua","사사기":"Judges","룻기":"Ruth","사무엘상":"1 Samuel","사무엘하":"2 Samuel","열왕기상":"1 Kings","열왕기하":"2 Kings","역대상":"1 Chronicles","역대하":"2 Chronicles","에스라":"Ezra","느헤미야":"Nehemiah","에스더":"Esther","욥기":"Job","시편":"Psalms","잠언":"Proverbs","전도서":"Ecclesiastes","아가":"Song of Songs","이사야":"Isaiah","예레미야":"Jeremiah","예레미야애가":"Lamentations","에스겔":"Ezekiel","다니엘":"Daniel","호세아":"Hosea","요엘":"Joel","아모스":"Amos","오바댜":"Obadiah","요나":"Jonah","미가":"Micah","나훔":"Nahum","하박국":"Habakkuk","스바냐":"Zephaniah","학개":"Haggai","스가랴":"Zechariah","말라기":"Malachi","마태복음":"Matthew","마가복음":"Mark","누가복음":"Luke","요한복음":"John","사도행전":"Acts","로마서":"Romans","고린도전서":"1 Corinthians","고린도후서":"2 Corinthians","갈라디아서":"Galatians","에베소서":"Ephesians","빌립보서":"Philippians","골로새서":"Colossians","데살로니가전서":"1 Thessalonians","데살로니가후서":"2 Thessalonians","디모데전서":"1 Timothy","디모데후서":"2 Timothy","디도서":"Titus","빌레몬서":"Philemon","히브리서":"Hebrews","야고보서":"James","베드로전서":"1 Peter","베드로후서":"2 Peter","요한일서":"1 John","요한이서":"2 John","요한삼서":"3 John","유다서":"Jude","요한계시록":"Revelation"};
 const WD = ["일","월","화","수","목","금","토"];
-/* 관공서 공휴일 · 대체공휴일 · 선거일 (우주항공청 월력요항 기준). 새해 월력요항이 나오면 이어서 적는다. */
-const HOL = {
-  "2025-01-01":"1월1일","2025-01-27":"임시공휴일","2025-01-28":"설날","2025-01-29":"설날","2025-01-30":"설날",
-  "2025-03-01":"삼일절","2025-03-03":"대체공휴일","2025-05-05":"어린이날·부처님오신날","2025-05-06":"대체공휴일",
-  "2025-06-03":"대통령선거일","2025-06-06":"현충일","2025-08-15":"광복절","2025-10-03":"개천절",
-  "2025-10-05":"추석","2025-10-06":"추석","2025-10-07":"추석","2025-10-08":"대체공휴일","2025-10-09":"한글날","2025-12-25":"기독탄신일",
-  "2026-01-01":"1월1일","2026-02-16":"설날","2026-02-17":"설날","2026-02-18":"설날",
-  "2026-03-01":"삼일절","2026-03-02":"대체공휴일","2026-05-01":"노동절","2026-05-05":"어린이날",
-  "2026-05-24":"부처님오신날","2026-05-25":"대체공휴일","2026-06-03":"지방선거일","2026-06-06":"현충일",
-  "2026-07-17":"제헌절","2026-08-15":"광복절","2026-08-17":"대체공휴일",
-  "2026-09-24":"추석","2026-09-25":"추석","2026-09-26":"추석","2026-10-03":"개천절","2026-10-05":"대체공휴일",
-  "2026-10-09":"한글날","2026-12-25":"기독탄신일",
-  "2027-01-01":"1월1일","2027-02-06":"설날","2027-02-07":"설날","2027-02-08":"설날","2027-02-09":"대체공휴일",
-  "2027-03-01":"삼일절","2027-05-01":"노동절","2027-05-03":"대체공휴일","2027-05-05":"어린이날","2027-05-13":"부처님오신날",
-  "2027-06-06":"현충일","2027-07-17":"제헌절","2027-07-19":"대체공휴일","2027-08-15":"광복절","2027-08-16":"대체공휴일",
-  "2027-09-14":"추석","2027-09-15":"추석","2027-09-16":"추석","2027-10-03":"개천절","2027-10-04":"대체공휴일",
-  "2027-10-09":"한글날","2027-10-11":"대체공휴일","2027-12-25":"기독탄신일","2027-12-27":"대체공휴일"
-};
-const HOL_YEARS = new Set(Object.keys(HOL).map(k=>k.slice(0,4)));
-const holTag = ds => HOL[ds] ? `<span class="hday">${HOL[ds]}</span>` : "";
 const PLAN = {"2026-10-01":{"ref":"사사기 15:1-20","title":"‘라맛 레히’에서 ‘엔학고레’로"},"2026-10-02":{"ref":"사사기 16:1-14","title":"밤에 삼켜지는 태양"},"2026-10-03":{"ref":"사사기 16:15-31","title":"다시 자라는 머리"},"2026-10-04":{"ref":"사사기 17:1-13","title":"기복신앙의 덫과 사유화된 종교"},"2026-10-05":{"ref":"사사기 18:1-20","title":"신앙으로 포장된 욕망"},"2026-10-06":{"ref":"사사기 18:21-31","title":"탐욕의 끝, 심판"},"2026-10-07":{"ref":"사사기 19:1-10","title":"한 레위 사람과 그의 첩"},"2026-10-08":{"ref":"사사기 19:11-21","title":"어느 노인의 환대"},"2026-10-09":{"ref":"사사기 19:22-30","title":"기브아의 비극"},"2026-10-10":{"ref":"사사기 20:1-7","title":"조작된 정의"},"2026-10-11":{"ref":"사사기 20:8-28","title":"이스라엘의 내전"},"2026-10-12":{"ref":"사사기 20:29-48","title":"폭주하는 칼날"},"2026-10-13":{"ref":"사사기 21:1-12","title":"\"이곳은 가나안 땅이더라\""},"2026-10-14":{"ref":"사사기 21:13-25","title":"이스라엘에 왕이 없으므로"},"2026-10-15":{"ref":"야고보서 1:1-11","title":"시험당하는 나그네"},"2026-10-16":{"ref":"야고보서 1:12-18","title":"시련의 끝에서 만나는 빛의 아버지"},"2026-10-17":{"ref":"야고보서 1:19-27","title":"\"속히 듣고 실천하기\""},"2026-10-18":{"ref":"야고보서 2:1-13","title":"차별이라는 죄"},"2026-10-19":{"ref":"야고보서 2:14-26","title":"\"행함으로 호흡하는 믿음\""},"2026-10-20":{"ref":"야고보서 3:1-12","title":"작지만 강력한 혀"},"2026-10-21":{"ref":"야고보서 3:13-18","title":"두 가지 지혜"},"2026-10-22":{"ref":"야고보서 4:1-12","title":"세상의 벗, 하나님의 벗"},"2026-10-23":{"ref":"야고보서 4:13-5:6","title":"안개 같은 인생"},"2026-10-24":{"ref":"야고보서 5:7-12","title":"오래 참고 인내하라"},"2026-10-25":{"ref":"야고보서 5:13-20"},"2026-10-26":{"ref":"시편 16:1-11"},"2026-10-27":{"ref":"시편 17:1-15"},"2026-10-28":{"ref":"시편 18:1-15"},"2026-10-29":{"ref":"시편 18:16-29"},"2026-10-30":{"ref":"시편 18:30-50"},"2026-10-31":{"ref":"시편 19:1-14"},"2026-11-01":{"ref":"고린도후서 1:1-11"},"2026-11-02":{"ref":"고린도후서 1:12-22"},"2026-11-03":{"ref":"고린도후서 1:23-2:17"},"2026-11-04":{"ref":"고린도후서 3:1-18"},"2026-11-05":{"ref":"고린도후서 4:1-18"},"2026-11-06":{"ref":"고린도후서 5:1-10"},"2026-11-07":{"ref":"고린도후서 5:11-21"},"2026-11-08":{"ref":"고린도후서 6:1-7:1"},"2026-11-09":{"ref":"고린도후서 7:2-16"},"2026-11-10":{"ref":"고린도후서 8:1-15"},"2026-11-11":{"ref":"고린도후서 8:16-24"},"2026-11-12":{"ref":"고린도후서 9:1-15"},"2026-11-13":{"ref":"고린도후서 10:1-18"},"2026-11-14":{"ref":"고린도후서 11:1-15"},"2026-11-15":{"ref":"고린도후서 11:16-33"},"2026-11-16":{"ref":"고린도후서 12:1-13"},"2026-11-17":{"ref":"고린도후서 12:14-21"},"2026-11-18":{"ref":"고린도후서 13:1-13"},"2026-11-19":{"ref":"시편 20:1-9"},"2026-11-20":{"ref":"시편 21:1-13"},"2026-11-21":{"ref":"시편 22:1-21"},"2026-11-22":{"ref":"시편 22:22-31"},"2026-11-23":{"ref":"시편 23:1-6"},"2026-11-24":{"ref":"시편 24:1-10"},"2026-11-25":{"ref":"시편 25:1-22"},"2026-11-26":{"ref":"이사야 40:1-11"},"2026-11-27":{"ref":"이사야 40:12-31"},"2026-11-28":{"ref":"이사야 41:1-20"},"2026-11-29":{"ref":"이사야 41:21-29"},"2026-11-30":{"ref":"이사야 42:1-25"}};
 const LKEY = "jubasi-docs-v1";
 
@@ -405,7 +315,6 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const S = {
   tab: "qt", date: todayStr(), src: "krv", editSrc: null, editRef: false,
   plan: JSON.parse(JSON.stringify(PLAN)), docs: {}, ready: false,
-  calY: new Date().getFullYear(), calM: new Date().getMonth(), calSel: todayStr(),
   q: "", qCats: [], qType: "all",
   openPick: new Set(), editPr: null, armed: null,
   unlocked: false, noteOpen: {sermon:null, edu:null, book:null, free:null}, noteEditText: null
@@ -416,7 +325,7 @@ const SB_KEY = "sb_publishable_h_GHfbrdW7T2K968k-VVHA_rRGtjDna";
 const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession:true, autoRefreshToken:true, storageKey:"geonkal-auth" } });
 const ls = { get(k,d){ try { const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); } catch(_){ return d; } },
              set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(_){} } };
-// 일정(ev-·vx-)은 건캘과 같은 표(docs)에, 나머지 기록은 jb_docs에 둔다
+// 기록은 jb_docs에 둔다. 일정 기능을 뺀 뒤에도, 예전에 기기에 남은 일정 변경분(ev-·vx-)은 건캘 표(docs)로 보낸다
 const tableOf = id => /^(ev|vx)-/.test(id) ? "docs" : "jb_docs";
 let pending = ls.get("jubasi-pending", {});   // id -> data, 삭제는 null
 let flushing = false, session = null;
@@ -815,100 +724,8 @@ function renderSearch(full){
     ${!S.unlocked && S.qType!=="prayer" ? `<p class="muted small" style="margin-top:10px">기도제목은 기도 탭 잠금을 풀어야 검색 결과에 함께 나와요.</p>` : ""}`;
 }
 
-/* ---------- render: calendar ---------- */
-const events = () => Object.entries(S.docs).filter(([,d])=>d.kind==="event" && !d.deleted && d.src!=="vision" && d.start && (showGk || !GKCATS.some(c=>c.k===d.cat))).map(([id,d])=>({id,...d}));
-const evc = k => `var(--ev-${k||"mission"})`;
-function evOn(date){ return events().filter(e=>e.start<=date && (e.end||e.start)>=date).sort((a,b)=>(a.allDay?0:1)-(b.allDay?0:1) || (a.startTime||"").localeCompare(b.startTime||"")); }
-function whenText(e){
-  const sd = shortDate(e.start), ed = shortDate(e.end||e.start);
-  if (e.allDay) return e.start===(e.end||e.start) ? `${sd} 종일` : `${sd} – ${ed}`;
-  return e.start===(e.end||e.start) ? `${sd} ${e.startTime||""}–${e.endTime||""}` : `${sd} ${e.startTime||""} – ${ed} ${e.endTime||""}`;
-}
-function evCard(e){
-  const c = ALLEV.find(x=>x.k===e.cat) || EVCATS[0];
-  return `<button class="ev" data-ev="${e.id}" style="--c:${evc(c.k)}"><span class="bar"></span>
-    <span style="min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t">${esc(e.title)}</span>
-      <span class="when">${whenText(e)}${e.place ? " · " + esc(e.place) : ""}</span>
-      ${e.memo ? `<span class="memo-t">${esc(e.memo)}</span>` : ""}</span>
-    <span class="cat">${c.n}</span></button>`;
-}
-function renderCal(){
-  const el = $("#p-cal"), y = S.calY, m = S.calM, first = new Date(y,m,1), t = todayStr();
-  const start = new Date(y,m,1-first.getDay());
-  const lastDay = new Date(y,m+1,0);
-  const cells = Math.ceil((first.getDay()+lastDay.getDate())/7)*7;
-  let g = WD.map((w,i)=>`<div class="wd ${i===0?"su":i===6?"sa":""}">${w}</div>`).join("");
-  for (let i=0;i<cells;i++){
-    const d = new Date(start); d.setDate(start.getDate()+i); const ds = ymd(d);
-    const evs = evOn(ds), dw = d.getDay();
-    g += `<button class="day ${d.getMonth()!==m?"out":""} ${dw===0?"su":dw===6?"sa":""} ${HOL[ds]?"hol":""} ${ds===t?"today":""} ${ds===S.calSel?"sel":""}" data-day="${ds}" aria-label="${korDate(ds)}${HOL[ds]?" "+HOL[ds]:""} 일정 ${evs.length}개">
-      <span class="n">${d.getDate()}</span>${HOL[ds]?`<span class="hn">${HOL[ds]}</span>`:""}
-      ${evs.slice(0,3).map(e=>`<span class="pill" style="--c:${evc(e.cat)}">${esc(e.title)}</span>`).join("")}
-      ${evs.length>3?`<span class="more">+${evs.length-3}</span>`:""}</button>`;
-  }
-  const ms = `${y}-${pad(m+1)}-01`, me = ymd(lastDay);
-  const monthEvs = events().filter(e=>e.start<=me && (e.end||e.start)>=ms).sort((a,b)=>(a.start+(a.startTime||"")).localeCompare(b.start+(b.startTime||"")));
-  const selEvs = S.calSel ? evOn(S.calSel) : [];
-  el.innerHTML = `
-    <div class="cal-head">
-      <h1>${y}년 ${m+1}월</h1>
-      <button class="iconbtn" data-act="mon" data-n="-1" aria-label="이전 달">‹</button>
-      <button class="iconbtn" data-act="mon" data-n="1" aria-label="다음 달">›</button>
-      <button class="btn" data-act="mon-today">이번 달</button>
-      <button class="btn primary" data-act="ev-new">＋ 일정 추가</button>
-    </div>
-    ${HOL_YEARS.has(String(y)) ? "" : `<p class="holnote" style="margin:0">${y}년 공휴일은 아직 넣지 않았어요. 월력요항이 나오면 추가할게요.</p>`}<div class="legend">${EVCATS.map(c=>`<span style="--c:${evc(c.k)}">${c.n}</span>`).join("")}${showGk ? GKCATS.map(c=>`<span style="--c:${evc(c.k)}">${c.n}</span>`).join("") : ""}</div>
-    <label class="small muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="gk-toggle" ${showGk?"checked":""}> 건캘 개인 일정(학교·취업·약속·가족·개인)도 보기</label>
-    <div class="grid-wrap"><div class="cal">${g}</div></div>
-    ${S.calSel ? `<div class="sec-h"><h2>${korDate(S.calSel)}${holTag(S.calSel)}</h2><button class="btn" data-act="ev-new" data-date="${S.calSel}">이 날 일정 추가</button></div>
-      <div class="evlist">${selEvs.length ? selEvs.map(evCard).join("") : `<div class="empty">이 날은 일정이 없어요.</div>`}</div>` : ""}
-    <div class="sec-h"><h2>${m+1}월 전체 일정</h2><span class="muted small">${monthEvs.length}개</span></div>
-    <div class="evlist">${monthEvs.length ? monthEvs.map(evCard).join("") : `<div class="empty">이번 달 일정이 아직 없어요. ‘＋ 일정 추가’로 예배, 선교, 섬김 일정을 넣어보세요.</div>`}</div>`;
-}
-
-/* ---------- event dialog ---------- */
-const dlg = $("#evdlg"); let evEditing = null, evCat = "mission";
-function paintCat(){ const g = GKCATS.find(c=>c.k===evCat); $("#ev-cat").innerHTML = (g ? [...EVCATS, g] : EVCATS).map(c=>`<button type="button" data-evcat="${c.k}" style="--c:${evc(c.k)}" aria-pressed="${c.k===evCat}">${c.n}</button>`).join(""); }
-function syncAllDay(){ const a = $("#ev-allday").checked; document.querySelectorAll(".tfield").forEach(x=>x.hidden=a); }
-function openEv(id, date){
-  evEditing = id || null; const e = id ? S.docs[id] : null; const d = date || S.calSel || todayStr();
-  $("#ev-h").textContent = e ? "일정 수정" : "일정 추가";
-  $("#ev-title").value = e?.title || ""; evCat = e?.cat || "worship"; paintCat();
-  $("#ev-allday").checked = !!e?.allDay;
-  $("#ev-sd").value = e?.start || d; $("#ev-ed").value = e?.end || e?.start || d;
-  $("#ev-st").value = e?.startTime || "10:00"; $("#ev-et").value = e?.endTime || "12:00";
-  $("#ev-place").value = e?.place || ""; $("#ev-memo").value = e?.memo || "";
-  $("#ev-err").hidden = true; const del = $("#ev-del"); del.hidden = !e; del.classList.remove("armed"); del.textContent = "삭제";
-  syncAllDay(); dlg.showModal(); $("#ev-title").focus();
-}
-$("#ev-cat").addEventListener("click", e=>{ const b = e.target.closest("[data-evcat]"); if (b){ evCat = b.dataset.evcat; paintCat(); } });
-$("#ev-allday").addEventListener("change", syncAllDay);
-document.addEventListener("change", e=>{ if (e.target && e.target.id==="gk-toggle"){ showGk = e.target.checked; try { localStorage.setItem("jubasi-show-gk", showGk ? "1" : "0"); } catch(_){} renderCal(); } });
-$("#ev-cancel").addEventListener("click", ()=>dlg.close());
-$("#ev-sd").addEventListener("change", ()=>{ if ($("#ev-ed").value < $("#ev-sd").value) $("#ev-ed").value = $("#ev-sd").value; });
-$("#ev-del").addEventListener("click", e=>{
-  const b = e.currentTarget;
-  if (!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "정말 삭제"; return; }
-  const old = S.docs[evEditing] || {};
-  setDoc(evEditing, {kind:"event", deleted:true, title:old.title||"", start:old.start||"", updated:Date.now()}); dlg.close(); renderCal();
-});
-$("#evform").addEventListener("submit", e=>{
-  e.preventDefault();
-  const title = $("#ev-title").value.trim(), allDay = $("#ev-allday").checked;
-  if (!ALLEV.some(c=>c.k===evCat)) evCat = "worship";
-  const start = $("#ev-sd").value, end = $("#ev-ed").value || start, st = $("#ev-st").value, et = $("#ev-et").value;
-  const err = m => { $("#ev-err").textContent = m; $("#ev-err").hidden = false; };
-  if (!title) return err("일정명을 입력해 주세요.");
-  if (!start) return err("시작일을 골라 주세요.");
-  if (end < start || (!allDay && end===start && et && st && et < st)) return err("종료가 시작보다 빨라요. 날짜와 시간을 확인해 주세요.");
-  const id = evEditing || "ev-" + rid();
-  setDoc(id, {kind:"event", title, cat:evCat, allDay, start, end, startTime: allDay?"":st, endTime: allDay?"":et, place:$("#ev-place").value.trim(), memo:$("#ev-memo").value.trim(), created: S.docs[id]?.created || Date.now(), updated: Date.now()});
-  const d = parseD(start); S.calY = d.getFullYear(); S.calM = d.getMonth(); S.calSel = start;
-  dlg.close(); renderCal();
-});
-
 /* ---------- tabs + render dispatch ---------- */
-const PANELS = {qt:renderQT, sermon:()=>renderNotes("sermon"), edu:()=>renderNotes("edu"), book:()=>renderNotes("book"), free:()=>renderNotes("free"), pray:renderPray, search:renderSearch, cal:renderCal};
+const PANELS = {qt:renderQT, sermon:()=>renderNotes("sermon"), edu:()=>renderNotes("edu"), book:()=>renderNotes("book"), free:()=>renderNotes("free"), pray:renderPray, search:renderSearch};
 function typingIn(el){ const a = document.activeElement; return a && el.contains(a) && a.matches("textarea, input:not([type=checkbox]):not([type=date]):not([type=time])"); }
 function render(force){
   const el = $("#p-"+S.tab);
@@ -958,10 +775,6 @@ document.addEventListener("click", e=>{
     else { S.date = r.go.date; if (r.go.src) S.src = r.go.src; setTab("qt"); }
     if (r.go.el) setTimeout(()=>{ const c = $("#"+r.go.el); if (c){ c.scrollIntoView({block:"center"}); c.classList.add("flash"); } }, 60);
     return; }
-  const day = t.closest("[data-day]");
-  if (day){ S.calSel = day.dataset.day; const d = parseD(S.calSel); if (d.getMonth()!==S.calM){ S.calY=d.getFullYear(); S.calM=d.getMonth(); } renderCal(); return; }
-  const evb = t.closest("[data-ev]");
-  if (evb){ openEv(evb.dataset.ev); return; }
   const nb = t.closest("[data-note]");
   if (nb){ S.noteOpen[nb.dataset.type] = nb.dataset.note; S.noteEditText = null; S.armed = null; render(true); window.scrollTo(0,0); return; }
 
@@ -1031,9 +844,6 @@ document.addEventListener("click", e=>{
     case "pr-del":
       if (S.armed !== id){ S.armed = id; renderPray(); break; }
       S.armed = null; delDoc(id); renderPray(); break;
-    case "mon": { const d = new Date(S.calY, S.calM + +a.dataset.n, 1); S.calY = d.getFullYear(); S.calM = d.getMonth(); S.calSel = null; renderCal(); break; }
-    case "mon-today": { const d = new Date(); S.calY = d.getFullYear(); S.calM = d.getMonth(); S.calSel = todayStr(); renderCal(); break; }
-    case "ev-new": openEv(null, a.dataset.date); break;
   }
 });
 document.addEventListener("change", e=>{
@@ -1093,7 +903,6 @@ document.addEventListener("input", e=>grow(e.target));
 let growRaf = 0;
 new MutationObserver(()=>{ cancelAnimationFrame(growRaf); growRaf = requestAnimationFrame(()=>growAll()); }).observe($(".wrap"), {childList:true, subtree:true});
 addEventListener("resize", ()=>{ cancelAnimationFrame(growRaf); growRaf = requestAnimationFrame(()=>growAll()); });
-$("#evdlg").addEventListener("toggle", ()=>growAll($("#evdlg")));
 
 /* ---------- highlighting ---------- */
 const bar = $("#hlbar"); let pend = null, hideT = null;
@@ -1134,14 +943,14 @@ async function loadTable(t, q){
 }
 function putRow(id, data){
   if (data && data.kind === "plan"){ const d = id.replace(/^plan-/, ""); S.plan[d] = {...(PLAN[d]||{}), ...data}; delete S.plan[d].kind; return; }
-  if (data && data.kind === "meta") return;
+  if (data && (data.kind === "meta" || data.kind === "event")) return;
   if (data) S.docs[id] = data; else delete S.docs[id];
 }
 async function loadAll(){
-  const [ev, jb] = await Promise.all([loadTable("docs", r=>r.eq("data->>kind","event")), loadTable("jb_docs")]);
+  const jb = await loadTable("jb_docs");
   const keep = {}; for (const id of Object.keys(S.docs)) if (busy(id)) keep[id] = S.docs[id];
   S.docs = {}; S.plan = clone(PLAN);
-  for (const r of [...ev, ...jb]) putRow(r.id, r.data);
+  for (const r of jb) putRow(r.id, r.data);
   for (const [id, d] of Object.entries(pending)) putRow(id, d);
   for (const [id, d] of Object.entries(keep)) S.docs[id] = d;
   S.ready = true; cacheDocs();
@@ -1151,7 +960,6 @@ function listen(){
   if (channel) sb.removeChannel(channel);
   const on = p=>{
     const id = (p.new && p.new.id) || (p.old && p.old.id); if (!id || busy(id)) return;
-    if (p.table === "docs" && p.new && p.new.data && p.new.data.kind !== "event") return;
     const nd = p.eventType === "DELETE" ? null : p.new.data;
     if (nd && nd.kind !== "plan" && JSON.stringify(S.docs[id]) === JSON.stringify(nd)) return;
     putRow(id, nd); cacheDocs();
@@ -1159,7 +967,6 @@ function listen(){
   };
   channel = sb.channel("jubasi-live")
     .on("postgres_changes", { event:"*", schema:"public", table:"jb_docs" }, on)
-    .on("postgres_changes", { event:"*", schema:"public", table:"docs" }, on)
     .subscribe();
 }
 async function refresh(){
@@ -1184,7 +991,7 @@ $("#bk-in").addEventListener("change", async e=>{
     const j = JSON.parse(await f.text()); if (!j || typeof j.docs !== "object") throw 0;
     let n = 0;
     for (const [id, d] of Object.entries(j.docs)){
-      if (!d || typeof d !== "object") continue;
+      if (!d || typeof d !== "object" || d.kind === "event" || /^(ev|vx)-/.test(id)) continue;
       const cur = S.docs[id];
       if (cur && (cur.updated||cur.created||0) >= (d.updated||d.created||0)) continue;
       S.docs[id] = d; pending[id] = clone(d); n++;
@@ -1223,7 +1030,7 @@ sb.auth.onAuthStateChange((ev, s)=>{
 });
 
 /* ---------- boot ---------- */
-S.docs = ls.get("jubasi-cache", {}) || {};
+S.docs = Object.fromEntries(Object.entries(ls.get("jubasi-cache", {}) || {}).filter(([,d])=>d && d.kind !== "event"));
 S.plan = {...clone(PLAN), ...(ls.get("jubasi-plan", {}) || {})};
 for (const [id, d] of Object.entries(pending)) putRow(id, d);
 const h0 = (location.hash||"").slice(1); if (PANELS[h0]) S.tab = h0;
