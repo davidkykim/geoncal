@@ -14,6 +14,7 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   if (u.hostname.endsWith("supabase.co")) return;
   if (u.pathname.includes("/gyeongoe/")) return; // 경외와 거룩 앱은 자기 sw.js가 맡는다
+  if (u.pathname.includes("/metronome/")) return; // 메트로놈 앱은 자기 sw.js가 맡는다
   const cacheable = u.origin === location.origin || /cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com/.test(u.hostname);
   if (!cacheable) return;
   e.respondWith(
