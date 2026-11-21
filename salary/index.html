@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>급여 자동배분 계산기</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="급여배분">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161d" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  /* 한 줄 좁은 화면: 머리띠 → 입력 → 비율 막대 → 항목 카드 → 합계 */
+  :root{
+    color-scheme:light;
+    --ink:#1b2559; --ink-2:#2b3a8c; --on-ink:#ffffff; --on-ink-muted:#c9cfe6;
+    --gold:#b0873f; --gold-soft:#e7d8b4;
+    --paper:#f6f5f1; --card:#ffffff; --line:#e7e3d8; --track:#ebe8df;
+    --text:#22242b; --muted:#6c707a;
+    --note-bg:#fbf6ec; --note-fg:#7a5a1e;
+    --warn-bg:#fdecec; --warn-line:#f3c0c0; --warn-fg:#9a2b2b;
+    --c-give:#b0873f; --c-fixed:#b07f52; --c-emg:#2f7d6b; --c-etf:#2b3a8c; --c-cash:#8a8f98; --c-chung:#5a8a9c;
+    --font:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#232c63; --ink-2:#34449a; --on-ink:#ffffff; --on-ink-muted:#c3c9e4;
+      --gold:#d1a85e; --gold-soft:#6b5730;
+      --paper:#14161d; --card:#1d2029; --line:#2e3240; --track:#2a2d38;
+      --text:#e9e9ee; --muted:#a2a6b2;
+      --note-bg:#2a2418; --note-fg:#e3c88f;
+      --warn-bg:#3a1d1f; --warn-line:#6b3236; --warn-fg:#f2b3b3;
+      --c-give:#d1a85e; --c-fixed:#c99568; --c-emg:#4fae97; --c-etf:#7f8fe0; --c-cash:#9da2ac; --c-chung:#7cb2c5;
+      color-scheme:dark;
+    }
+  }
+
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--paper); color:var(--text); font-family:var(--font);
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    padding-top:calc(20px + env(safe-area-inset-top, 0px));
+    padding-bottom:calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-left:max(16px, env(safe-area-inset-left, 0px));
+    padding-right:max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap{max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:14px;}
+
+  .head{
+    background:linear-gradient(155deg,var(--ink) 0%,var(--ink-2) 100%);
+    color:var(--on-ink); border-radius:18px; padding:22px 20px 20px;
+    position:relative; overflow:hidden;
+  }
+  .head::after{
+    content:""; position:absolute; right:-40px; top:-40px; width:150px; height:150px;
+    background:radial-gradient(circle,rgba(224,192,120,.28),transparent 70%);
+  }
+  .eyebrow{font-size:12px; letter-spacing:.14em; color:var(--gold-soft); margin:0 0 6px;}
+  .head h1{font-size:22px; font-weight:700; margin:0 0 6px; letter-spacing:-.02em; text-wrap:balance;}
+  .head p{margin:0; font-size:13px; color:var(--on-ink-muted);}
+
+  .inputs{display:flex; gap:12px; flex-wrap:wrap;}
+  .field{flex:1 1 200px; min-width:0;}
+  .field label{display:block; font-size:13px; color:var(--muted); margin:0 0 6px; font-weight:600;}
+  .inputbox{position:relative;}
+  .inputbox input{
+    width:100%; border:1.5px solid var(--line); border-radius:12px; background:var(--card);
+    padding:13px 38px 13px 14px; font-size:20px; font-weight:700; color:var(--text);
+    font-family:inherit; font-variant-numeric:tabular-nums; -webkit-appearance:none; appearance:none;
+  }
+  .inputbox input:focus{outline:none; border-color:var(--ink-2);}
+  .inputbox .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--muted); font-weight:600; pointer-events:none;}
+  .field .man{font-size:12px; color:var(--muted); margin:5px 2px 0; font-variant-numeric:tabular-nums; min-height:18px;}
+  .hint{font-size:12.5px; color:var(--muted); margin:0 2px;}
+  .hint b{color:var(--text);}
+
+  .warn{background:var(--warn-bg); border:1px solid var(--warn-line); color:var(--warn-fg); border-radius:10px; padding:11px 13px; font-size:13px;}
+
+  .bar{display:flex; height:26px; border-radius:8px; overflow:hidden; background:var(--track); margin-top:6px;}
+  .bar span{height:100%; transition:width .5s cubic-bezier(.2,.7,.2,1);}
+  .legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:10px;}
+  .legend div{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums;}
+  .dot{width:9px; height:9px; border-radius:3px; flex:none;}
+
+  .cards{display:flex; flex-direction:column; gap:10px; margin-top:6px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 15px;}
+  .card .top{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+  .card .name{font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; min-width:0;}
+  .card .pct{font-size:12px; color:var(--muted); font-weight:600; font-variant-numeric:tabular-nums; flex:none;}
+  .card .amt{font-size:21px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; margin-top:2px;}
+  .card .sm{font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums;}
+  .sub{margin-top:11px; padding-top:11px; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:7px;}
+  .sub .row{display:flex; justify-content:space-between; gap:12px; font-size:13px;}
+  .sub .row .l{color:var(--muted); min-width:0;}
+  .sub .row .r{font-weight:600; font-variant-numeric:tabular-nums; text-align:right; flex:none;}
+
+  .total-row{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; background:var(--ink); color:var(--on-ink); border-radius:14px;}
+  .total-row .l{font-size:14px; color:var(--on-ink-muted); font-weight:600;}
+  .total-row .r{font-size:18px; font-weight:800; font-variant-numeric:tabular-nums;}
+
+  .foot{margin-top:8px; font-size:12px; color:var(--muted); text-align:center; line-height:1.75;}
+  .foot p{margin:0 0 6px;}
+  .verse{font-style:italic; color:var(--gold);}
+
+  @media (prefers-reduced-motion:reduce){ .bar span{transition:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <p class="eyebrow">청지기 자산관리</p>
+    <h1>급여 자동배분 계산기</h1>
+    <p>월급과 성과금을 합친 세전·세후만 넣으면 정해둔 기준대로 어디에 얼마를 넣을지 원 단위로 나눠 줍니다.</p>
+  </header>
+
+  <div class="inputs">
+    <div class="field">
+      <label for="gross">세전 (월급+성과금)</label>
+      <div class="inputbox"><input id="gross" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="next" value="4,500,000"><span class="unit">원</span></div>
+      <p class="man" id="grossMan"></p>
+    </div>
+    <div class="field">
+      <label for="net">세후(실수령)</label>
+      <div class="inputbox"><input id="net" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" value="4,000,000"><span class="unit">원</span></div>
+      <p class="man" id="netMan"></p>
+    </div>
+  </div>
+  <p class="hint">월급과 성과금을 합친 금액을 넣으세요. 헌금은 <b>십일조 세전 10% + 사역지원비 세전 10% + 주일·감사·선교 각 5만원</b>입니다. 남은 실수령액에서 주택청약 25만원을 먼저 떼고 나머지를 비율로 나눕니다.</p>
+
+  <div class="warn" id="warn" hidden></div>
+
+  <div>
+    <div class="bar" id="bar"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="total-row">
+    <span class="l">합계 (실수령액)</span>
+    <span class="r" id="totalOut">—</span>
+  </div>
+
+  <footer class="foot">
+    <p class="verse">"돈을 벌기 위해 투자하지 말고, 맡겨진 삶을 잘 감당하기 위해 투자하라."</p>
+    <p>헌금 = 십일조 세전 10% + 사역지원비 세전 10% + 주일·감사·선교 각 5만원 · 주택청약 25만원 고정<br>
+    남은 돈 비율 비상금 35 · ETF 45 · 현금 5 · 고정지출 200 (합 285)<br>
+    ETF 내부 S&amp;P500 25 · 나스닥100 10 · 미국채 5 · 휴머노이드·AI 테마 5 (합 45)</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var FIXED_GIFT = 50000;     // 주일·감사·선교 각 5만원
+  var CHUNGYAK = 250000;      // 주택청약 월 인정 한도
+  var KEY = 'salaryCalc';     // 마지막으로 넣은 금액은 이 기기에만 저장
+
+  function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function digits(s){ return parseInt(String(s).replace(/[^0-9]/g,''),10) || 0; }
+  function fmt(n){ return Math.round(n).toLocaleString('ko-KR'); }
+  function won(n){ return fmt(n) + '원'; }
+  function man(n){ var r = Math.round(n/1000)/10; return (Number.isInteger(r) ? r.toLocaleString('ko-KR') : r.toFixed(1)) + '만원'; }
+  function pct(p,w){ return w>0 ? (p/w*100).toFixed(1)+'%' : '0%'; }
+
+  // 반올림 오차는 마지막 항목(lastKey)이 흡수해서 합계가 정확히 맞도록
+  function splitRounded(total, weights, lastKey){
+    var sum = 0, out = {}, wsum = 0, k;
+    for(k in weights) wsum += weights[k];
+    for(k in weights){ out[k] = Math.round(total * weights[k] / wsum); sum += out[k]; }
+    out[lastKey] += (Math.round(total) - sum);
+    return out;
+  }
+
+  function calc(G, N){
+    var tithe = Math.round(G*0.10);
+    var ministry = Math.round(G*0.10);
+    var giving = tithe + ministry + FIXED_GIFT*3;
+
+    var remaining = N - giving;
+    var negative = remaining < 0;
+    if(negative) remaining = 0;
+
+    var chung = Math.min(CHUNGYAK, remaining);
+    var rest = remaining - chung;
+    var cats = splitRounded(rest, {emergency:35, etf:45, cash:5, fixed:200}, 'fixed');
+    cats.chungyak = chung;
+    var etf = splitRounded(cats.etf, {sp500:25, nasdaq:10, bond:5, theme:5}, 'sp500');
+    return {giving:giving, tithe:tithe, ministry:ministry, remaining:remaining, cats:cats, etf:etf, negative:negative};
+  }
+
+  function card(color, name, amt, whole, rule, subHtml){
+    return '<div class="card" style="border-left:4px solid '+color+'">'
+      + '<div class="top"><div class="name"><span class="dot" style="background:'+color+'"></span>'+name+'</div>'
+      + '<div class="pct">실수령 '+pct(amt,whole)+'</div></div>'
+      + '<div class="amt">'+won(amt)+'</div>'
+      + '<div class="sm">'+man(amt)+(rule ? ' · '+rule : '')+'</div>'
+      + (subHtml||'') + '</div>';
+  }
+  function subRow(l,v){ return '<div class="row"><span class="l">'+l+'</span><span class="r">'+won(v)+'</span></div>'; }
+
+  function render(){
+    var G = digits(document.getElementById('gross').value);
+    var N = digits(document.getElementById('net').value);
+    document.getElementById('grossMan').textContent = G ? man(G) : '';
+    document.getElementById('netMan').textContent = N ? man(N) : '';
+
+    var d = calc(G,N);
+    var C = {give:css('--c-give'), fixed:css('--c-fixed'), emg:css('--c-emg'), etf:css('--c-etf'), cash:css('--c-cash'), chung:css('--c-chung')};
+
+    var warn = document.getElementById('warn');
+    if(d.negative){
+      warn.hidden = false;
+      warn.textContent = '헌금('+won(d.giving)+')이 실수령액보다 큽니다. 세전·세후 금액을 확인해 주세요.';
+    } else if(d.remaining < CHUNGYAK && N>0){
+      warn.hidden = false;
+      warn.textContent = '헌금을 뗀 남은 돈이 주택청약 25만원보다 적습니다. 금액을 확인해 주세요.';
+    } else { warn.hidden = true; warn.textContent=''; }
+
+    var giveSub = '<div class="sub">'
+      + subRow('십일조 (세전 10%)', d.tithe)
+      + subRow('주일헌금 (5만원 고정)', FIXED_GIFT)
+      + subRow('감사헌금 (5만원 고정)', FIXED_GIFT)
+      + subRow('선교헌금 (5만원 고정)', FIXED_GIFT)
+      + subRow('사역지원비 (세전 10%)', d.ministry)
+      + '</div>';
+    var etfSub = '<div class="sub">'
+      + subRow('미국 S&amp;P500', d.etf.sp500)
+      + subRow('미국 나스닥100', d.etf.nasdaq)
+      + subRow('미국채 10년', d.etf.bond)
+      + subRow('휴머노이드 · AI 테마', d.etf.theme)
+      + '</div>';
+
+    var html = card(C.give, '① 그의 나라를 위해', d.giving, N, '세전 20% + 15만원', giveSub)
+      + card(C.chung, '② 주택청약종합저축', d.cats.chungyak, N, '월 25만원 고정')
+      + card(C.emg, '③ 비상금 적금', d.cats.emergency, N, '남은 돈 × 35/285')
+      + card(C.etf, '④ ETF 적립식 (중개형 ISA)', d.cats.etf, N, '남은 돈 × 45/285', etfSub)
+      + card(C.cash, '⑤ 현금성 · 파킹', d.cats.cash, N, '남은 돈 × 5/285')
+      + card(C.fixed, '⑥ 고정지출 · 생활비', d.cats.fixed, N, '남은 돈 × 200/285');
+    document.getElementById('cards').innerHTML = html;
+
+    var segs = [['헌금',d.giving,C.give],['고정지출',d.cats.fixed,C.fixed],['비상금',d.cats.emergency,C.emg],['ETF',d.cats.etf,C.etf],['청약',d.cats.chungyak,C.chung],['현금',d.cats.cash,C.cash]];
+    var bar='', leg='';
+    segs.forEach(function(s){
+      var w = N>0 ? Math.min(100, s[1]/N*100) : 0;
+      bar += '<span style="width:'+w+'%;background:'+s[2]+'"></span>';
+      leg += '<div><span class="dot" style="background:'+s[2]+'"></span>'+s[0]+' '+pct(s[1],N)+'</div>';
+    });
+    document.getElementById('bar').innerHTML = bar;
+    document.getElementById('legend').innerHTML = leg;
+
+    var total = d.giving; for(var k in d.cats) total += d.cats[k];
+    document.getElementById('totalOut').textContent = won(total);
+
+    try{ localStorage.setItem(KEY, JSON.stringify({g:G, n:N})); }catch(e){}
+  }
+
+  ['gross','net'].forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener('input', function(){
+      var n = digits(el.value);
+      el.value = n ? fmt(n) : '';
+      render();
+    });
+    el.addEventListener('focus', function(){ setTimeout(function(){ try{ el.select(); }catch(e){} }, 0); });
+    el.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      if(id === 'gross') document.getElementById('net').focus(); else el.blur();
+    });
+  });
+
+  try{
+    var saved = JSON.parse(localStorage.getItem(KEY)||'null');
+    if(saved){
+      if(saved.g) document.getElementById('gross').value = fmt(saved.g);
+      if(saved.n) document.getElementById('net').value = fmt(saved.n);
+    }
+  }catch(e){}
+
+  if(window.matchMedia){
+    try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render); }catch(e){}
+  }
+
+  render();
+
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
+</script>
+</body>
+</html>
