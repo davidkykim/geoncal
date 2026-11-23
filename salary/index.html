@@ -18,11 +18,11 @@
   @font-face{font-family:'Jost';font-weight:500;font-display:swap;src:url(jost-latin-500-normal.woff2) format('woff2');}
   @font-face{font-family:'Jost';font-weight:700;font-display:swap;src:url(jost-latin-700-normal.woff2) format('woff2');}
 
-  /* 화면 두 장: ① 계산기(위 회색 표시창 + 아래 흰 숫자판) ② 배분 결과 */
+  /* 화면 세 장: ① 계산기(위 회색 표시창 + 아래 흰 숫자판) ② 배분 결과(오른쪽) ③ 배분 설정(왼쪽) */
   :root{
     color-scheme:light;
     --disp:#eef1f4; --pad:#ffffff; --ink:#111214; --sub:#8b9098; --faint:#c9ced6; --line:#e9ecf0;
-    --accent:#e0574f; --accent-soft:#fbe4e2; --press:#f2f4f7;
+    --accent:#e0574f; --accent-soft:#fbe4e2; --press:#f2f4f7; --field:#f4f6f8;
     --c1:#e0574f; --c2:#f2a08f; --c3:#2f3540; --c4:#6b7482; --c5:#a7aeb8; --c6:#d5d9df;
     --num:'Jost','Futura',-apple-system,BlinkMacSystemFont,sans-serif;
     --kr:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Malgun Gothic','Segoe UI',sans-serif;
@@ -31,7 +31,7 @@
     :root{
       color-scheme:dark;
       --disp:#1b1d21; --pad:#0f1012; --ink:#f4f5f7; --sub:#8d929b; --faint:#4a4f57; --line:#24272c;
-      --accent:#f0675e; --accent-soft:#3a1f1d; --press:#1c1e22;
+      --accent:#f0675e; --accent-soft:#3a1f1d; --press:#1c1e22; --field:#1b1d21;
       --c1:#f0675e; --c2:#f4a594; --c3:#e6e8ec; --c4:#9aa2ae; --c5:#666d78; --c6:#3b4048;
     }
   }
@@ -51,38 +51,42 @@
     body{background:var(--disp); display:flex; align-items:center;}
     .app{height:min(100dvh, 880px); border-radius:28px; box-shadow:0 20px 60px rgba(0,0,0,.12);}
   }
-  .screen{position:absolute; inset:0; display:flex; flex-direction:column; transition:transform .32s cubic-bezier(.2,.75,.2,1);}
-  #result{transform:translateX(100%); background:var(--pad);}
+  .screen{position:absolute; inset:0; display:flex; flex-direction:column; background:var(--pad); transition:transform .32s cubic-bezier(.2,.75,.2,1);}
+  #result{transform:translateX(100%);}
+  #settings{transform:translateX(-100%);}
   .app.show-result #calc{transform:translateX(-28%);}
   .app.show-result #result{transform:none;}
+  .app.show-settings #calc{transform:translateX(28%);}
+  .app.show-settings #settings{transform:none;}
   @media (prefers-reduced-motion:reduce){ .screen{transition:none;} }
 
   /* ── 표시창 ── */
   .display{
-    background:var(--disp); flex:1 1 auto; min-height:190px;
+    background:var(--disp); flex:1 1 auto; min-height:200px;
     display:flex; flex-direction:column; justify-content:space-between;
     padding:calc(14px + env(safe-area-inset-top,0px)) 26px 22px;
   }
-  .topbar{display:flex; justify-content:space-between; align-items:center;}
-  .tabs{display:flex; gap:18px;}
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px;}
+  .link{font-size:15px; font-weight:600; color:var(--accent); padding:8px 0; display:inline-flex; align-items:center; gap:5px;}
+  .link.plain{color:var(--ink);}
+  .link svg{width:18px; height:18px;}
+  .tabs{display:flex; gap:18px; margin-top:6px;}
   .tab{font-size:15px; font-weight:600; color:var(--sub); padding:8px 0; position:relative;}
   .tab[aria-selected="true"]{color:var(--ink);}
   .tab[aria-selected="true"]::after{content:""; position:absolute; left:0; right:0; bottom:2px; height:2px; border-radius:2px; background:var(--accent);}
-  .go{font-size:15px; font-weight:600; color:var(--accent); padding:8px 0 8px 12px;}
   .readout{text-align:right; min-width:0;}
-  .other{font-size:13px; color:var(--sub); margin-bottom:10px; font-variant-numeric:tabular-nums;}
+  .other{font-size:13px; color:var(--sub); margin-bottom:10px;}
   .other b{font-family:var(--num); font-weight:500; color:var(--ink); opacity:.7; letter-spacing:.01em;}
   .expr{font-family:var(--num); font-size:17px; color:var(--sub); min-height:24px; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; direction:rtl;}
   .expr span{direction:ltr; unicode-bidi:isolate;}
   .big{font-family:var(--num); font-weight:700; font-size:58px; line-height:1.05; letter-spacing:-.01em; white-space:nowrap; font-variant-numeric:tabular-nums;}
-  .big small{font-size:.42em; font-weight:500; margin-left:4px; color:var(--sub); font-family:var(--kr);}
   .man{font-size:13px; color:var(--sub); margin-top:6px; min-height:19px;}
 
   /* ── 숫자판 ── */
   .keys{
     display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:minmax(62px,1fr);
     padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px)); flex:0 0 auto;
-    height:min(58dvh, 470px);
+    height:min(56dvh, 470px);
   }
   .key{
     font-family:var(--num); font-size:28px; font-weight:500; border-radius:18px;
@@ -99,8 +103,6 @@
 
   /* ── 결과 화면 ── */
   .rhead{background:var(--disp); padding:calc(14px + env(safe-area-inset-top,0px)) 26px 22px;}
-  .back{font-size:15px; font-weight:600; color:var(--accent); padding:8px 12px 8px 0; display:inline-flex; align-items:center; gap:4px;}
-  .back svg{width:18px; height:18px;}
   .rsum{text-align:right; margin-top:14px;}
   .rsum .label{font-size:13px; color:var(--sub);}
   .rsum .big{font-size:46px;}
@@ -110,7 +112,7 @@
 
   .list{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:6px 22px calc(30px + env(safe-area-inset-bottom,0px));}
   .item{border-bottom:1px solid var(--line);}
-  .item:last-of-type{border-bottom:0;}
+  .item:last-child{border-bottom:0;}
   .row{width:100%; display:flex; align-items:center; gap:12px; padding:16px 4px; text-align:left;}
   .num{font-family:var(--num); font-size:13px; color:var(--sub); width:16px; flex:none;}
   .sw{width:8px; height:8px; border-radius:50%; flex:none;}
@@ -122,13 +124,53 @@
   .amt i{display:block; font-style:normal; font-family:var(--num); font-size:12.5px; color:var(--sub);}
   .chev{width:14px; height:14px; color:var(--faint); flex:none; transition:transform .2s;}
   .item.open .chev{transform:rotate(90deg); color:var(--accent);}
-  .detail{display:none; padding:0 4px 14px 36px;}
+  .detail{display:none; padding:0 4px 16px 36px;}
   .item.open .detail{display:block;}
-  .detail div{display:flex; justify-content:space-between; gap:12px; padding:5px 0; font-size:13.5px;}
-  .detail span:first-child{color:var(--sub);}
-  .detail span:last-child{font-family:var(--num); font-weight:500; font-variant-numeric:tabular-nums;}
-  .rule{margin-top:20px; font-size:12px; line-height:1.8; color:var(--sub); text-align:center;}
-  .verse{margin-top:12px; font-size:12.5px; color:var(--accent); text-align:center; font-style:italic;}
+  .detail .ln{display:flex; justify-content:space-between; gap:12px; padding:5px 0; font-size:13.5px;}
+  .detail .ln span:first-child{color:var(--sub);}
+  .detail .ln span:last-child{font-family:var(--num); font-weight:500; font-variant-numeric:tabular-nums; text-align:right;}
+  .detail .how{margin:0 0 6px; padding:9px 11px; border-radius:10px; background:var(--field); font-size:12.5px; line-height:1.6; color:var(--sub);}
+  .detail .how b{color:var(--ink); font-weight:600;}
+
+  /* ── 설정 화면 ── */
+  .shead{background:var(--disp); padding:calc(14px + env(safe-area-inset-top,0px)) 22px 16px;}
+  .shead .topbar{min-height:38px;}
+  .shead h2{margin:14px 0 2px; font-size:24px; font-weight:700; letter-spacing:-.02em;}
+  .shead p{margin:0; font-size:13px; color:var(--sub);}
+  .save-top{font-size:15px; font-weight:700; color:var(--accent); padding:8px 0 8px 12px;}
+  .save-top:disabled{color:var(--faint); cursor:default;}
+  .form{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:8px 22px calc(28px + env(safe-area-inset-bottom,0px));}
+  .group{margin-top:20px;}
+  .group h3{margin:0 0 4px; font-size:13px; font-weight:700; color:var(--accent); letter-spacing:.02em;}
+  .group .gnote{margin:0 0 6px; font-size:12px; color:var(--sub);}
+  .fld{display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--line);}
+  .fld:last-child{border-bottom:0;}
+  .fld label{flex:1; min-width:0; font-size:15px;}
+  .fld label i{display:block; font-style:normal; font-size:12px; color:var(--sub); margin-top:1px; font-variant-numeric:tabular-nums;}
+  .inp{position:relative; flex:none; width:140px;}
+  .inp input{
+    width:100%; border:1.5px solid transparent; border-radius:10px; background:var(--field); color:var(--ink);
+    padding:9px 34px 9px 12px; text-align:right; font-family:var(--num); font-size:18px; font-weight:500;
+    font-variant-numeric:tabular-nums; -webkit-appearance:none; appearance:none;
+  }
+  .inp.narrow{width:110px;}
+  .inp input:focus{outline:none; border-color:var(--accent);}
+  .inp input.bad{border-color:var(--accent); color:var(--accent);}
+  .inp em{position:absolute; right:12px; top:50%; transform:translateY(-50%); font-style:normal; font-size:13px; color:var(--sub); pointer-events:none;}
+  .sum{display:flex; justify-content:space-between; padding:9px 0 0; font-size:12.5px; color:var(--sub);}
+  .sum b{font-family:var(--num); font-weight:500; color:var(--ink);}
+  .err{margin-top:16px; padding:11px 14px; border-radius:12px; background:var(--accent-soft); color:var(--accent); font-size:13px; font-weight:600;}
+  .actions{margin-top:24px; display:flex; flex-direction:column; gap:10px;}
+  .btn{height:54px; border-radius:16px; font-size:16px; font-weight:700;}
+  .btn.primary{background:var(--accent); color:#fff;}
+  .btn.primary:disabled{opacity:.4; cursor:default;}
+  .btn.ghost{height:44px; font-size:14px; font-weight:600; color:var(--sub);}
+  .verse{margin:22px 0 0; font-size:12.5px; color:var(--sub); text-align:center; font-style:italic; line-height:1.6;}
+
+  .toast{position:absolute; left:50%; bottom:calc(28px + env(safe-area-inset-bottom,0px)); transform:translate(-50%,20px); opacity:0;
+    background:var(--ink); color:var(--pad); padding:11px 18px; border-radius:22px; font-size:14px; font-weight:600; white-space:nowrap;
+    transition:opacity .2s, transform .2s; pointer-events:none; z-index:5;}
+  .toast.on{opacity:1; transform:translate(-50%,0);}
 </style>
 </head>
 <body>
@@ -137,12 +179,15 @@
   <!-- ① 계산기 -->
   <section class="screen" id="calc" aria-label="금액 입력">
     <div class="display">
-      <div class="topbar">
+      <div>
+        <div class="topbar">
+          <button class="link plain" id="openSet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>배분 설정</button>
+          <button class="link" id="go">배분 보기 ›</button>
+        </div>
         <div class="tabs" role="tablist">
           <button class="tab" role="tab" data-f="g" aria-selected="true">세전</button>
           <button class="tab" role="tab" data-f="n" aria-selected="false">세후</button>
         </div>
-        <button class="go" id="go">배분 보기 ›</button>
       </div>
       <div class="readout">
         <div class="other" id="other"></div>
@@ -177,7 +222,7 @@
   <!-- ② 배분 결과 -->
   <section class="screen" id="result" aria-label="배분 결과">
     <div class="rhead">
-      <button class="back" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>계산기</button>
+      <button class="link" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>계산기</button>
       <div class="rsum">
         <div class="label" id="rlabel"></div>
         <div class="big" id="rtotal">0</div>
@@ -187,13 +232,73 @@
     <div class="warn" id="warn" hidden></div>
     <div class="list" id="list"></div>
   </section>
+
+  <!-- ③ 배분 설정 -->
+  <section class="screen" id="settings" aria-label="배분 설정">
+    <div class="shead">
+      <div class="topbar">
+        <button class="link" id="closeSet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span id="closeLabel">계산기</span></button>
+        <button class="save-top" id="saveTop" disabled>저장</button>
+      </div>
+      <h2>배분 설정</h2>
+      <p>비율과 금액을 고친 뒤 저장을 누르면 바로 계산에 반영됩니다.</p>
+    </div>
+    <form class="form" id="form" autocomplete="off" novalidate>
+      <div class="group">
+        <h3>① 헌금</h3>
+        <div class="fld"><label for="r-tithe">십일조<i>세전 기준</i></label><div class="inp narrow"><input id="r-tithe" data-r="tithe" data-t="pct" inputmode="decimal"><em>%</em></div></div>
+        <div class="fld"><label for="r-ministry">사역지원비<i>세전 기준</i></label><div class="inp narrow"><input id="r-ministry" data-r="ministry" data-t="pct" inputmode="decimal"><em>%</em></div></div>
+        <div class="fld"><label for="r-sunday">주일헌금</label><div class="inp"><input id="r-sunday" data-r="sunday" data-t="won" inputmode="numeric"><em>원</em></div></div>
+        <div class="fld"><label for="r-thanks">감사헌금</label><div class="inp"><input id="r-thanks" data-r="thanks" data-t="won" inputmode="numeric"><em>원</em></div></div>
+        <div class="fld"><label for="r-mission">선교헌금</label><div class="inp"><input id="r-mission" data-r="mission" data-t="won" inputmode="numeric"><em>원</em></div></div>
+      </div>
+
+      <div class="group">
+        <h3>② 주택청약</h3>
+        <p class="gnote">헌금을 뗀 뒤 가장 먼저 떼는 고정 금액</p>
+        <div class="fld"><label for="r-chung">월 납입액</label><div class="inp"><input id="r-chung" data-r="chung" data-t="won" inputmode="numeric"><em>원</em></div></div>
+      </div>
+
+      <div class="group">
+        <h3>③~⑥ 남은 돈 비율</h3>
+        <p class="gnote">헌금과 청약을 뗀 나머지를 아래 비율로 나눕니다</p>
+        <div class="fld"><label for="w-emergency">비상금 적금<i id="p-emergency"></i></label><div class="inp narrow"><input id="w-emergency" data-w="w" data-k="emergency" inputmode="decimal"></div></div>
+        <div class="fld"><label for="w-etf">ETF 적립식<i id="p-etf"></i></label><div class="inp narrow"><input id="w-etf" data-w="w" data-k="etf" inputmode="decimal"></div></div>
+        <div class="fld"><label for="w-cash">현금성 · 파킹<i id="p-cash"></i></label><div class="inp narrow"><input id="w-cash" data-w="w" data-k="cash" inputmode="decimal"></div></div>
+        <div class="fld"><label for="w-fixed">고정지출 · 생활비<i id="p-fixed"></i></label><div class="inp narrow"><input id="w-fixed" data-w="w" data-k="fixed" inputmode="decimal"></div></div>
+        <div class="sum"><span>비율 합</span><b id="sum-w"></b></div>
+      </div>
+
+      <div class="group">
+        <h3>ETF 안에서 나누는 비율</h3>
+        <div class="fld"><label for="e-sp500">미국 S&amp;P500<i id="p-sp500"></i></label><div class="inp narrow"><input id="e-sp500" data-w="e" data-k="sp500" inputmode="decimal"></div></div>
+        <div class="fld"><label for="e-nasdaq">미국 나스닥100<i id="p-nasdaq"></i></label><div class="inp narrow"><input id="e-nasdaq" data-w="e" data-k="nasdaq" inputmode="decimal"></div></div>
+        <div class="fld"><label for="e-bond">미국채 10년<i id="p-bond"></i></label><div class="inp narrow"><input id="e-bond" data-w="e" data-k="bond" inputmode="decimal"></div></div>
+        <div class="fld"><label for="e-theme">휴머노이드 · AI 테마<i id="p-theme"></i></label><div class="inp narrow"><input id="e-theme" data-w="e" data-k="theme" inputmode="decimal"></div></div>
+        <div class="sum"><span>비율 합</span><b id="sum-e"></b></div>
+      </div>
+
+      <div class="err" id="err" hidden></div>
+      <div class="actions">
+        <button type="submit" class="btn primary" id="saveBtn" disabled>저장</button>
+        <button type="button" class="btn ghost" id="resetBtn">처음 기준으로 되돌리기</button>
+      </div>
+      <p class="verse">"돈을 벌기 위해 투자하지 말고,<br>맡겨진 삶을 잘 감당하기 위해 투자하라."</p>
+    </form>
+  </section>
+
+  <div class="toast" id="toast" role="status"></div>
 </div>
 
 <script>
 (function(){
-  var FIXED_GIFT = 50000;     // 주일·감사·선교 각 5만원
-  var CHUNGYAK = 250000;      // 주택청약 월 인정 한도
-  var KEY = 'salaryCalc';     // 마지막으로 넣은 금액은 이 기기에만 저장
+  var KEY = 'salaryCalc';      // 마지막으로 넣은 금액 (이 기기에만 저장)
+  var RKEY = 'salaryRules';    // 배분 설정 (이 기기에만 저장)
+  var DEFAULT = {
+    tithe:10, ministry:10, sunday:50000, thanks:50000, mission:50000, chung:250000,
+    w:{emergency:35, etf:45, cash:5, fixed:200},
+    e:{sp500:25, nasdaq:10, bond:5, theme:5}
+  };
   var OPS = '+-*/';
   var SYM = {'+':'+','-':'−','*':'×','/':'÷'};
   var NAME = {g:'세전 (월급+성과금)', n:'세후 (실수령)'};
@@ -203,6 +308,23 @@
   function fmt(n){ return Math.round(n).toLocaleString('ko-KR'); }
   function man(n){ var r = Math.round(n/1000)/10; return (Number.isInteger(r) ? r.toLocaleString('ko-KR') : r.toFixed(1)) + '만원'; }
   function pct(p,w){ return w>0 ? (p/w*100).toFixed(1)+'%' : '0%'; }
+  function numStr(x){ return (Math.round(x*100)/100).toLocaleString('ko-KR', {maximumFractionDigits:2}); }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function sumOf(o){ var s=0; for(var k in o) s+=o[k]; return s; }
+
+  // ── 배분 설정 불러오기 (빠진 값은 처음 기준으로 채움) ──
+  function loadRules(){
+    var r = clone(DEFAULT);
+    try{
+      var s = JSON.parse(localStorage.getItem(RKEY)||'null');
+      if(s){
+        ['tithe','ministry','sunday','thanks','mission','chung'].forEach(function(k){ if(typeof s[k]==='number' && s[k]>=0) r[k]=s[k]; });
+        ['w','e'].forEach(function(g){ if(s[g]) for(var k in r[g]) if(typeof s[g][k]==='number' && s[g][k]>=0) r[g][k]=s[g][k]; });
+      }
+    }catch(e){}
+    return r;
+  }
+  var R = loadRules();
 
   // ── 입력 상태: 칸마다 식(문자열)을 들고, 값은 식을 계산한 결과 ──
   var S = {f:'g', ex:{g:'4500000', n:'4000000'}, fresh:true};
@@ -252,15 +374,14 @@
       ex = S.fresh ? '' : ex.slice(0,-1); S.fresh = false;
     } else if(k==='='){
       if(hasOp(ex)){ ex = String(evaluate(ex)); S.fresh = true; }
-      else { S.ex[S.f] = String(evaluate(ex)); if(S.f==='g') return setField('n'); return showResult(true); }
+      else { S.ex[S.f] = String(evaluate(ex)); if(S.f==='g') return setField('n'); return go('result'); }
     }
     S.ex[S.f] = ex;
     draw();
   }
 
   function setField(f){
-    var cur = S.f;
-    S.ex[cur] = String(val(cur));   // 옮기기 전에 식을 값으로 정리
+    S.ex[S.f] = String(val(S.f));   // 옮기기 전에 식을 값으로 정리
     S.f = f; S.fresh = true;
     draw();
   }
@@ -270,9 +391,8 @@
     document.querySelectorAll('.tab').forEach(function(t){ t.setAttribute('aria-selected', t.dataset.f===f); });
     $('other').innerHTML = (o==='g'?'세전':'세후') + '&nbsp; <b>' + fmt(val(o)) + '</b>';
     $('expr').firstChild.textContent = hasOp(ex) ? pretty(ex) : NAME[f];
-    var big = $('big');
-    big.textContent = fmt(v);
-    fit(big, 58);
+    $('big').textContent = fmt(v);
+    fit($('big'), 58);
     $('man').textContent = v ? man(v) : '';
     try{ localStorage.setItem(KEY, JSON.stringify({g:val('g'), n:val('n'), f:f})); }catch(e){}
   }
@@ -280,82 +400,169 @@
   function fit(el, max){
     el.style.fontSize = max+'px';
     var w = el.parentNode.clientWidth;
-    if(el.scrollWidth > w) el.style.fontSize = Math.max(28, Math.floor(max * w / el.scrollWidth))+'px';
+    if(w && el.scrollWidth > w) el.style.fontSize = Math.max(28, Math.floor(max * w / el.scrollWidth))+'px';
   }
 
-  // ── 배분 계산 (아티팩트와 같은 기준) ──
+  // ── 배분 계산 ──
   function splitRounded(total, weights, lastKey){
-    var sum = 0, out = {}, wsum = 0, k;
-    for(k in weights) wsum += weights[k];
-    for(k in weights){ out[k] = Math.round(total * weights[k] / wsum); sum += out[k]; }
+    var sum = 0, out = {}, wsum = sumOf(weights), k;
+    for(k in weights){ out[k] = wsum>0 ? Math.round(total * weights[k] / wsum) : 0; sum += out[k]; }
     out[lastKey] += (Math.round(total) - sum);
     return out;
   }
   function calc(G, N){
-    var tithe = Math.round(G*0.10), ministry = Math.round(G*0.10);
-    var giving = tithe + ministry + FIXED_GIFT*3;
+    var tithe = Math.round(G*R.tithe/100), ministry = Math.round(G*R.ministry/100);
+    var gifts = R.sunday + R.thanks + R.mission;
+    var giving = tithe + ministry + gifts;
     var remaining = N - giving, negative = remaining < 0;
     if(negative) remaining = 0;
-    var chung = Math.min(CHUNGYAK, remaining);
-    var cats = splitRounded(remaining - chung, {emergency:35, etf:45, cash:5, fixed:200}, 'fixed');
+    var chung = Math.min(R.chung, remaining);
+    var rest = remaining - chung;
+    var cats = splitRounded(rest, R.w, 'fixed');
     cats.chungyak = chung;
-    var etf = splitRounded(cats.etf, {sp500:25, nasdaq:10, bond:5, theme:5}, 'sp500');
-    return {giving:giving, tithe:tithe, ministry:ministry, remaining:remaining, cats:cats, etf:etf, negative:negative};
+    var etf = splitRounded(cats.etf, R.e, 'sp500');
+    return {giving:giving, tithe:tithe, ministry:ministry, gifts:gifts, remaining:remaining, rest:rest, cats:cats, etf:etf, negative:negative};
   }
 
   var CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
-  function item(no, color, name, rule, amt, N, detail){
+  function item(no, color, name, sub, amt, N, detail){
     return '<div class="item">'
-      + '<button class="row"'+(detail?' aria-expanded="false"':' tabindex="-1"')+'>'
+      + '<button class="row" aria-expanded="false">'
       + '<span class="num">'+no+'</span><span class="sw" style="background:'+color+'"></span>'
-      + '<span class="name"><b>'+name+'</b><i>'+rule+'</i></span>'
+      + '<span class="name"><b>'+name+'</b><i>'+sub+'</i></span>'
       + '<span class="amt"><b>'+fmt(amt)+'</b><i>'+pct(amt,N)+'</i></span>'
-      + (detail ? CHEV : '<span style="width:14px"></span>')
-      + '</button>'
-      + (detail ? '<div class="detail">'+detail+'</div>' : '')
+      + CHEV + '</button>'
+      + '<div class="detail">'+detail+'</div>'
       + '</div>';
   }
-  function d(l,v){ return '<div><span>'+l+'</span><span>'+fmt(v)+'</span></div>'; }
+  function ln(l,v){ return '<div class="ln"><span>'+l+'</span><span>'+v+'</span></div>'; }
+  function how(t){ return '<p class="how">'+t+'</p>'; }
 
   function renderResult(){
     var G = val('g'), N = val('n'), r = calc(G,N);
-    var C = [css('--c1'),css('--c2'),css('--c3'),css('--c4'),css('--c5'),css('--c6')];
+    var col = {give:css('--c1'), chung:css('--c2'), fixed:css('--c3'), emg:css('--c4'), etf:css('--c5'), cash:css('--c6')};
+    var W = sumOf(R.w), E = sumOf(R.e);
     $('rlabel').textContent = '세전 ' + fmt(G) + ' · 실수령';
     $('rtotal').textContent = fmt(N);
     fit($('rtotal'), 46);
 
     var w = $('warn');
     if(r.negative){ w.hidden=false; w.textContent='헌금('+fmt(r.giving)+'원)이 실수령액보다 큽니다. 세전·세후 금액을 확인해 주세요.'; }
-    else if(r.remaining < CHUNGYAK && N>0){ w.hidden=false; w.textContent='헌금을 뗀 남은 돈이 주택청약 25만원보다 적습니다. 금액을 확인해 주세요.'; }
+    else if(r.remaining < R.chung && N>0){ w.hidden=false; w.textContent='헌금을 뗀 남은 돈이 주택청약 '+man(R.chung)+'보다 적습니다. 금액을 확인해 주세요.'; }
     else w.hidden = true;
 
-    var rows = [
-      ['헌금', r.giving], ['청약', r.cats.chungyak], ['고정지출', r.cats.fixed],
-      ['비상금', r.cats.emergency], ['ETF', r.cats.etf], ['현금', r.cats.cash]
-    ];
-    var col = {'헌금':C[0],'청약':C[1],'고정지출':C[2],'비상금':C[3],'ETF':C[4],'현금':C[5]};
-    $('bar').innerHTML = rows.map(function(x){ return '<span style="width:'+(N>0?Math.min(100,x[1]/N*100):0)+'%;background:'+col[x[0]]+'"></span>'; }).join('');
+    var segs = [[r.giving,col.give],[r.cats.chungyak,col.chung],[r.cats.fixed,col.fixed],[r.cats.emergency,col.emg],[r.cats.etf,col.etf],[r.cats.cash,col.cash]];
+    $('bar').innerHTML = segs.map(function(x){ return '<span style="width:'+(N>0?Math.min(100,x[0]/N*100):0)+'%;background:'+x[1]+'"></span>'; }).join('');
 
+    function share(k){ return numStr(R.w[k])+'/'+numStr(W); }
+    function restHow(k, label){
+      return how('헌금과 청약을 뗀 남은 돈 <b>'+fmt(r.rest)+'원</b> × '+label+' 비율 <b>'+share(k)+'</b>');
+    }
+    var giveSub = '세전 '+numStr(R.tithe+R.ministry)+'% + '+man(r.gifts);
     var html = ''
-      + item('1', col['헌금'], '그의 나라를 위해', '세전 20% + 15만원', r.giving, N,
-          d('십일조 (세전 10%)', r.tithe) + d('주일헌금', FIXED_GIFT) + d('감사헌금', FIXED_GIFT) + d('선교헌금', FIXED_GIFT) + d('사역지원비 (세전 10%)', r.ministry))
-      + item('2', col['청약'], '주택청약종합저축', '월 25만원 고정', r.cats.chungyak, N)
-      + item('3', col['비상금'], '비상금 적금', '남은 돈 × 35/285', r.cats.emergency, N)
-      + item('4', col['ETF'], 'ETF 적립식', '중개형 ISA · 남은 돈 × 45/285', r.cats.etf, N,
-          d('미국 S&amp;P500', r.etf.sp500) + d('미국 나스닥100', r.etf.nasdaq) + d('미국채 10년', r.etf.bond) + d('휴머노이드 · AI 테마', r.etf.theme))
-      + item('5', col['현금'], '현금성 · 파킹', '남은 돈 × 5/285', r.cats.cash, N)
-      + item('6', col['고정지출'], '고정지출 · 생활비', '남은 돈 × 200/285', r.cats.fixed, N)
-      + '<p class="rule">헌금 = 십일조 세전 10% + 사역지원비 세전 10% + 주일·감사·선교 각 5만원<br>'
-      + '주택청약 25만원을 먼저 떼고, 남은 돈을 비상금 35 · ETF 45 · 현금 5 · 고정지출 200으로 나눕니다<br>'
-      + 'ETF 안에서는 S&amp;P500 25 · 나스닥100 10 · 미국채 5 · 테마 5</p>'
-      + '<p class="verse">"돈을 벌기 위해 투자하지 말고, 맡겨진 삶을 잘 감당하기 위해 투자하라."</p>';
+      + item('1', col.give, '그의 나라를 위해', giveSub, r.giving, N,
+          how('십일조와 사역지원비는 <b>세전의 '+numStr(R.tithe)+'%·'+numStr(R.ministry)+'%</b>, 주일·감사·선교헌금은 정해 둔 금액을 그대로 냅니다.')
+          + ln('십일조 (세전 '+numStr(R.tithe)+'%)', fmt(r.tithe)) + ln('주일헌금', fmt(R.sunday)) + ln('감사헌금', fmt(R.thanks))
+          + ln('선교헌금', fmt(R.mission)) + ln('사역지원비 (세전 '+numStr(R.ministry)+'%)', fmt(r.ministry)))
+      + item('2', col.chung, '주택청약종합저축', '월 '+man(R.chung)+' 고정', r.cats.chungyak, N,
+          how('헌금을 뗀 뒤 <b>가장 먼저</b> 떼는 고정 금액입니다. 남은 돈이 '+man(R.chung)+'보다 적으면 남은 만큼만 넣습니다.')
+          + ln('헌금을 뗀 남은 돈', fmt(r.remaining)) + ln('청약 납입', fmt(r.cats.chungyak)))
+      + item('3', col.emg, '비상금 적금', '남은 돈의 '+pct(R.w.emergency, W), r.cats.emergency, N, restHow('emergency','비상금'))
+      + item('4', col.etf, 'ETF 적립식', '중개형 ISA · 남은 돈의 '+pct(R.w.etf, W), r.cats.etf, N,
+          restHow('etf','ETF') + how('ETF 안에서는 <b>S&amp;P500 '+numStr(R.e.sp500)+' · 나스닥100 '+numStr(R.e.nasdaq)+' · 미국채 '+numStr(R.e.bond)+' · 테마 '+numStr(R.e.theme)+'</b> 비율로 나눕니다.')
+          + ln('미국 S&amp;P500 ('+pct(R.e.sp500,E)+')', fmt(r.etf.sp500)) + ln('미국 나스닥100 ('+pct(R.e.nasdaq,E)+')', fmt(r.etf.nasdaq))
+          + ln('미국채 10년 ('+pct(R.e.bond,E)+')', fmt(r.etf.bond)) + ln('휴머노이드 · AI 테마 ('+pct(R.e.theme,E)+')', fmt(r.etf.theme)))
+      + item('5', col.cash, '현금성 · 파킹', '남은 돈의 '+pct(R.w.cash, W), r.cats.cash, N, restHow('cash','현금'))
+      + item('6', col.fixed, '고정지출 · 생활비', '남은 돈의 '+pct(R.w.fixed, W), r.cats.fixed, N,
+          restHow('fixed','고정지출') + how('나머지 항목을 원 단위로 반올림하면서 생긴 몇 원 차이는 이 항목에서 맞춥니다.'));
     $('list').innerHTML = html;
   }
 
-  function showResult(on){
-    if(on){ S.ex.g = String(val('g')); S.ex.n = String(val('n')); S.fresh = true; draw(); renderResult(); $('list').scrollTop = 0; }
-    $('app').classList.toggle('show-result', on);
-    $('calc').inert = on; $('result').inert = !on;
+  // ── 배분 설정 화면 ──
+  var form = $('form'), dirty = false;
+  function fillForm(r){
+    form.querySelectorAll('input').forEach(function(i){
+      var v = i.dataset.w ? r[i.dataset.w][i.dataset.k] : r[i.dataset.r];
+      i.value = i.dataset.t==='won' ? fmt(v) : numStr(v).replace(/,/g,'');
+      i.classList.remove('bad');
+    });
+    updateShares();
+  }
+  function readNum(i){
+    var s = i.value.replace(/,/g,'').trim();
+    if(s==='' || !/^\d*\.?\d*$/.test(s) || s==='.') return NaN;
+    return +s;
+  }
+  function readForm(){
+    var r = clone(DEFAULT), ok = true;
+    form.querySelectorAll('input').forEach(function(i){
+      var v = readNum(i);
+      var bad = isNaN(v) || v<0 || (i.dataset.t==='pct' && v>100) || (i.dataset.t==='won' && v!==Math.floor(v));
+      i.classList.toggle('bad', bad);
+      if(bad){ ok = false; return; }
+      if(i.dataset.w) r[i.dataset.w][i.dataset.k] = v; else r[i.dataset.r] = v;
+    });
+    return {r:r, ok:ok};
+  }
+  function updateShares(){
+    var x = readForm().r, W = sumOf(x.w), E = sumOf(x.e);
+    for(var k in x.w) $('p-'+k).textContent = '남은 돈의 '+pct(x.w[k], W);
+    for(var j in x.e) $('p-'+j).textContent = 'ETF의 '+pct(x.e[j], E);
+    $('sum-w').textContent = numStr(W); $('sum-e').textContent = numStr(E);
+  }
+  function validate(){
+    var x = readForm(), msg = '';
+    if(!x.ok) msg = '빈칸이나 잘못된 숫자가 있습니다. 빨간 칸을 확인해 주세요.';
+    else if(sumOf(x.r.w) <= 0) msg = '남은 돈 비율의 합이 0보다 커야 합니다.';
+    else if(sumOf(x.r.e) <= 0) msg = 'ETF 안의 비율 합이 0보다 커야 합니다.';
+    $('err').hidden = !msg; $('err').textContent = msg;
+    return msg ? null : x.r;
+  }
+  function setDirty(on){
+    dirty = on;
+    $('saveBtn').disabled = !on; $('saveTop').disabled = !on;
+    $('closeLabel').textContent = on ? '취소' : '계산기';
+  }
+  form.addEventListener('input', function(e){
+    var i = e.target;
+    if(i.dataset.t==='won'){ var n = i.value.replace(/[^0-9]/g,''); i.value = n ? fmt(+n) : ''; }
+    else i.value = i.value.replace(/[^0-9.]/g,'');
+    updateShares();
+    if(!$('err').hidden) validate(); else i.classList.remove('bad');
+    setDirty(true);
+  });
+  form.addEventListener('focusin', function(e){ var i=e.target; if(i.tagName==='INPUT') setTimeout(function(){ try{ i.select(); }catch(_){} },0); });
+  function save(e){
+    if(e) e.preventDefault();
+    var r = validate(); if(!r) return;
+    R = r;
+    try{ localStorage.setItem(RKEY, JSON.stringify(R)); }catch(_){}
+    setDirty(false);
+    document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    toast('배분 설정을 저장했습니다');
+    go('calc');
+  }
+  form.addEventListener('submit', save);
+  $('saveTop').addEventListener('click', save);
+  $('resetBtn').addEventListener('click', function(){
+    fillForm(DEFAULT); validate(); setDirty(true);
+    toast('처음 기준을 불러왔습니다. 저장을 눌러야 반영됩니다');
+  });
+  $('closeSet').addEventListener('click', function(){ go('calc'); });
+
+  var tt;
+  function toast(t){ var el=$('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){ el.classList.remove('on'); }, 2200); }
+
+  // ── 화면 전환 ──
+  var view = 'calc';
+  function go(v){
+    if(v==='result'){ S.ex.g = String(val('g')); S.ex.n = String(val('n')); S.fresh = true; draw(); renderResult(); $('list').scrollTop = 0; }
+    if(v==='settings'){ fillForm(R); setDirty(false); $('err').hidden = true; $('form').scrollTop = 0; }
+    if(view==='settings' && v!=='settings'){ document.activeElement && document.activeElement.blur && document.activeElement.blur(); }
+    view = v;
+    $('app').classList.toggle('show-result', v==='result');
+    $('app').classList.toggle('show-settings', v==='settings');
+    $('calc').inert = v!=='calc'; $('result').inert = v!=='result'; $('settings').inert = v!=='settings';
   }
 
   // ── 이벤트 ──
@@ -365,10 +572,11 @@
     buzz(); press(b.dataset.k);
   });
   document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click', function(){ setField(t.dataset.f); }); });
-  $('go').addEventListener('click', function(){ showResult(true); });
-  $('back').addEventListener('click', function(){ showResult(false); });
+  $('go').addEventListener('click', function(){ go('result'); });
+  $('openSet').addEventListener('click', function(){ go('settings'); });
+  $('back').addEventListener('click', function(){ go('calc'); });
   $('list').addEventListener('click', function(e){
-    var row = e.target.closest('.row'); if(!row || !row.hasAttribute('aria-expanded')) return;
+    var row = e.target.closest('.row'); if(!row) return;
     var it = row.parentNode, open = !it.classList.contains('open');
     it.classList.toggle('open', open); row.setAttribute('aria-expanded', open);
   });
@@ -376,8 +584,8 @@
   // 키보드(윈도우·맥)
   document.addEventListener('keydown', function(e){
     if(e.metaKey || e.ctrlKey || e.altKey) return;
-    var onResult = $('app').classList.contains('show-result');
-    if(onResult){ if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); showResult(false); } return; }
+    if(view==='settings'){ if(e.key==='Escape'){ e.preventDefault(); go('calc'); } return; }
+    if(view==='result'){ if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); go('calc'); } return; }
     var k = e.key, map = {'Enter':'=','=':'=','Backspace':'B','Delete':'C','Escape':'C','x':'*','X':'*'};
     if(map[k]) k = map[k];
     if(/^[0-9]$/.test(k) || OPS.indexOf(k)>=0 || k==='=' || k==='B' || k==='C'){
@@ -388,10 +596,10 @@
   });
 
   window.addEventListener('resize', function(){ fit($('big'),58); });
-  if(window.matchMedia){ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ if($('app').classList.contains('show-result')) renderResult(); }); }catch(e){} }
+  if(window.matchMedia){ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ if(view==='result') renderResult(); }); }catch(e){} }
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ fit($('big'),58); });
 
-  $('result').inert = true;
+  go('calc');
   draw();
 
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
