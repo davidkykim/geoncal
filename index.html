@@ -88,7 +88,7 @@ a{color:var(--accent)}
   width:min(440px,calc(100vw - 28px));display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--dock);
   box-shadow:0 12px 32px rgb(50 40 170 / .30)}
 :root[data-theme="dark"] .dock{box-shadow:0 12px 32px rgb(0 0 0 / .5),inset 0 0 0 1px rgb(255 255 255 / .06)}
-.seg{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.seg{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
 .seg button{border:0;background:transparent;height:46px;border-radius:999px;font-weight:600;font-size:14.5px;white-space:nowrap;
   color:color-mix(in srgb,var(--dock-ink) 70%,transparent);transition:background-color .18s,color .18s}
 .seg button[aria-pressed="true"]{background:var(--dock-on);color:var(--dock-on-ink)}
@@ -275,7 +275,6 @@ textarea.field{resize:vertical;min-height:100px}
       <button data-f="all" aria-pressed="true">전체</button>
       <button data-f="church" aria-pressed="false">교회</button>
       <button data-f="life" aria-pressed="false">개인</button>
-      <button data-f="job" aria-pressed="false">취업</button>
     </div>
     <button class="fab" id="fab" aria-label="일정 추가"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   </nav>
@@ -372,7 +371,7 @@ const SB_URL = "https://hqkevnklspswfcsroxxp.supabase.co";
 const SB_KEY = "sb_publishable_h_GHfbrdW7T2K968k-VVHA_rRGtjDna";
 
 const CATS = [
-  {k:"school",n:"학교",g:"life"},{k:"job",n:"취업",g:"job"},{k:"meet",n:"약속",g:"life"},{k:"kin",n:"가족",g:"life"},{k:"life",n:"개인",g:"life"},{k:"etc",n:"기타",g:"life"},
+  {k:"school",n:"학교",g:"life"},{k:"job",n:"취업",g:"life"},{k:"meet",n:"약속",g:"life"},{k:"kin",n:"가족",g:"life"},{k:"life",n:"개인",g:"life"},{k:"etc",n:"기타",g:"life"},
   {k:"mission",n:"선교",g:"church"},{k:"worship",n:"예배",g:"church"},{k:"serve",n:"섬김",g:"church"},{k:"edu",n:"교육",g:"church"},{k:"family",n:"경조사",g:"church"},{k:"fellow",n:"교제",g:"church"}
 ];
 const catOf = k => CATS.find(c=>c.k===k) || CATS[4];
@@ -415,6 +414,7 @@ const ls = { get(k,d){ try { const v = localStorage.getItem(k); return v==null ?
              set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(_){} } };
 
 let F = ls.get("geonkal-filter", "all");
+if (!["all","church","life"].includes(F)) F = "all";  // 예전 「취업」 보기를 쓰던 기기
 const S = { docs: ls.get("geonkal-cache", {}), ready:false, calY:new Date().getFullYear(), calM:new Date().getMonth(), calSel:todayStr() };
 const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession:true, autoRefreshToken:true, storageKey:"geonkal-auth" } });
 
@@ -479,7 +479,7 @@ document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState
 const events = () => Object.entries(S.docs)
   .filter(([,d])=>d && d.kind==="event" && !d.deleted && d.start)
   .map(([id,d])=>({id,...d}))
-  .filter(e=> F==="all" ? !minorJob(e) : catOf(e.cat).g===F);
+  .filter(e=> !minorJob(e) && (F==="all" || catOf(e.cat).g===F));
 /* 디데이: 다가오는 날짜순, 지난 디데이는 맨 뒤 */
 const ddays = () => { const t = todayStr(); return Object.entries(S.docs)
   .filter(([,d])=>d && d.kind==="dday" && !d.deleted && d.date)
@@ -685,7 +685,7 @@ $("#ro-close").addEventListener("click", ()=>{ rodlg.close(); render(); });
 function openEv(id, date){
   evEditing = id || null; const e = id ? S.docs[id] : null; const d = date || S.calSel || todayStr();
   $("#ev-h").textContent = e ? "일정 수정" : "일정 추가";
-  $("#ev-title").value = e?.title || ""; evCat = e?.cat || (F==="church" ? "worship" : F==="job" ? "job" : "life"); paintCat();
+  $("#ev-title").value = e?.title || ""; evCat = e?.cat || (F==="church" ? "worship" : "life"); paintCat();
   $("#ev-allday").checked = !!e?.allDay;
   $("#ev-sd").value = e?.start || d; $("#ev-ed").value = e?.end || e?.start || d;
   $("#ev-st").value = e?.startTime || "10:00"; $("#ev-et").value = e?.endTime || "12:00";
