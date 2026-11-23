@@ -77,6 +77,23 @@ main{padding-top:14px;display:flex;flex-direction:column;gap:18px}
 .up-row{display:grid;grid-template-columns:62px 10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 8px;border:0;background:transparent;border-radius:8px;text-align:left;width:100%}
 .up-row:hover{background:var(--sunk)}
 .up-row.past{opacity:.45}
+.tri{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.tri>section{min-width:0}
+@media (min-width:760px){
+  .tri{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+  .tri .up-row{grid-template-columns:48px 8px minmax(0,1fr) auto;gap:8px;padding:7px 6px}
+  .tri .up-row .t small{display:block;margin-left:0}
+}
+@media (min-width:1000px){.wrap{max-width:1100px}}
+.dd-list{display:flex;flex-direction:column;gap:8px}
+.dd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 14px;text-align:left;width:100%;color:var(--ink)}
+.dd:hover{border-color:var(--accent)}
+.dd .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd .dt{display:block;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.dd .n{font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dd.hot .n{color:var(--danger)}
+.dd.done{opacity:.55}
+.dd.done .n{color:var(--muted)}
 .up-row .d{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.3}
 .up-row .d b{display:block;color:var(--ink);font-weight:600;font-size:13px}
 .up-row .dot{width:10px;height:10px;border-radius:3px;background:var(--c)}
@@ -219,6 +236,20 @@ textarea.field{resize:vertical;min-height:100px}
     <div class="dlg-actions">
       <button type="button" class="btn danger left" id="ev-del" hidden>삭제</button>
       <button type="button" class="btn" id="ev-cancel">취소</button>
+      <button type="submit" class="btn primary">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dddlg">
+  <form class="dlg" id="ddform">
+    <h2 id="dd-h">디데이 추가</h2>
+    <div><label class="lbl" for="dd-title">이름</label><input class="field" id="dd-title" autocomplete="off" placeholder="예) 삼성중공업 입사" enterkeyhint="done"></div>
+    <div><label class="lbl" for="dd-date">날짜</label><input class="field" type="date" id="dd-date"></div>
+    <p class="err" id="dd-err" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn danger left" id="dd-del" hidden>삭제</button>
+      <button type="button" class="btn" id="dd-cancel">취소</button>
       <button type="submit" class="btn primary">저장</button>
     </div>
   </form>
@@ -375,6 +406,11 @@ const events = () => Object.entries(S.docs)
   .filter(([,d])=>d && d.kind==="event" && !d.deleted && d.start)
   .map(([id,d])=>({id,...d}))
   .filter(e=> F==="all" ? !minorJob(e) : catOf(e.cat).g===F);
+/* 디데이: 다가오는 날짜순, 지난 디데이는 맨 뒤 */
+const ddays = () => { const t = todayStr(); return Object.entries(S.docs)
+  .filter(([,d])=>d && d.kind==="dday" && !d.deleted && d.date)
+  .map(([id,d])=>({id,...d}))
+  .sort((a,b)=> ((a.date<t)-(b.date<t)) || (a.date<t ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date))); };
 /* 전체 보기에서는 트래커에서 온 취업 일정 중 접수 시작·마감·발표(s0~s2)를 숨기고 시험·면접(s3)만 남긴다. 취업 탭에는 모두 보인다. */
 const minorJob = e => e.src==="vision" && e.cat==="job" && !/-s3$/.test(e.id);
 const sortKey = e => (e.start||"") + (e.allDay ? "00:00" : (e.startTime||"99:99"));
@@ -433,13 +469,14 @@ function render(){
     const more = hidden.map((h,c)=>h ? `<span class="more" style="grid-column:${c+1};grid-row:${nl+2}" aria-hidden="true">+${h}</span>` : "").join("");
     g += `<div class="wk" style="grid-template-rows:${rows}">${days}${heads}${bands}${more}</div>`;
   }
-  const selEvs = S.calSel ? evOn(S.calSel) : [];
+  const showSel = S.calSel && S.calSel !== t;
+  const selEvs = showSel ? evOn(S.calSel) : [], todayEvs = evOn(t);
   const byStart = (a,b)=>sortKey(a).localeCompare(sortKey(b));
   /* 이번 주: 오늘이 든 주의 월요일~일요일 */
   const wkS = addDays(t, -((parseD(t).getDay()+6)%7)), wkE = addDays(wkS, 6);
   const wkEvs = events().filter(e=>(e.end||e.start)>=wkS && e.start<=wkE).sort(byStart);
   const horizon = addDays(t, 13);
-  const up = events().filter(e=>(e.end||e.start)>=t && e.start<=horizon).sort(byStart).slice(0,8);
+  const up = events().filter(e=>(e.end||e.start)>=t && e.start<=horizon).sort(byStart).slice(0,12);
   const upRow = (e, s)=>{
     const n = diffDays(t, s), past = (e.end||e.start) < t;
     const head = n===0?"오늘":n===1?"내일":n===-1?"어제":mdw(s).split(" ")[0];
@@ -447,13 +484,13 @@ function render(){
     return `<button class="up-row ${past?"past":""}" data-ev="${esc(e.id)}" style="--c:${cv(e.cat)}"><span class="d"><b>${head}</b>${sub}</span><span class="dot"></span>
       <span class="t">${esc(e.title)}<small>${e.allDay?"종일":esc(e.startTime||"")}${e.place?" · "+esc(e.place):""}</small></span>${dday(e)}</button>`;
   };
+  const dds = ddays();
   const loading = !(S.ready || Object.keys(S.docs).length > 0);
   const legendCats = CATS.filter(c=>F==="all" || c.g===F);
   $("#main").innerHTML = `
     <section style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec-h"><h2>이번 주 <span class="muted small" style="font-weight:400">${mdw(wkS)} – ${mdw(wkE)}</span></h2><button class="btn primary" data-act="ev-new">＋ 일정 추가</button></div>
-      ${wkEvs.length ? `<div class="up">${wkEvs.map(e=>upRow(e, e.start < wkS ? wkS : e.start)).join("")}</div>`
-        : `<div class="empty">${loading ? "일정을 불러오는 중이에요." : "이번 주에 잡힌 일정이 없어요."}</div>`}
+      <div class="sec-h"><h2>오늘 <span class="muted small" style="font-weight:400">${mdw(t)}${holTag(t)}</span></h2><button class="btn primary" data-act="ev-new" data-date="${t}">＋ 일정 추가</button></div>
+      <div class="evlist">${todayEvs.length ? todayEvs.map(evCard).join("") : `<div class="empty">${loading ? "일정을 불러오는 중이에요." : "오늘은 잡힌 일정이 없어요."}</div>`}</div>
     </section>
     <section style="display:flex;flex-direction:column;gap:10px">
       <div class="cal-head">
@@ -465,13 +502,29 @@ function render(){
       ${HOL_YEARS.has(String(y)) ? "" : `<p class="holnote" style="margin:0">${y}년 공휴일은 아직 넣지 않았어요.</p>`}<div class="legend">${legendCats.map(c=>`<span style="--c:${cv(c.k)}">${c.n}</span>`).join("")}</div>
       <div class="cal" id="cal">${g}</div>
     </section>
-    ${S.calSel ? `<section style="display:flex;flex-direction:column;gap:10px"><div class="sec-h"><h2>${korDate(S.calSel)}${holTag(S.calSel)}</h2><button class="btn" data-act="ev-new" data-date="${S.calSel}">이 날 일정 추가</button></div>
+    ${showSel ? `<section style="display:flex;flex-direction:column;gap:10px"><div class="sec-h"><h2>${korDate(S.calSel)}${holTag(S.calSel)}</h2><button class="btn" data-act="ev-new" data-date="${S.calSel}">이 날 일정 추가</button></div>
       <div class="evlist">${selEvs.length ? selEvs.map(evCard).join("") : `<div class="empty">이 날은 일정이 없어요.</div>`}</div></section>` : ""}
-    <section style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec-h"><h2>앞으로 2주</h2></div>
-      ${up.length ? `<div class="up">${up.map(e=>upRow(e, e.start < t ? t : e.start)).join("")}</div>`
-        : `<div class="empty">${loading ? "일정을 불러오는 중이에요." : "앞으로 2주 동안 잡힌 일정이 없어요."}</div>`}
-    </section>
+    <div class="tri">
+      <section style="display:flex;flex-direction:column;gap:10px">
+        <div class="sec-h"><h2>이번 주</h2><span class="muted small">${mdw(wkS)} – ${mdw(wkE)}</span></div>
+        ${wkEvs.length ? `<div class="up">${wkEvs.map(e=>upRow(e, e.start < wkS ? wkS : e.start)).join("")}</div>`
+          : `<div class="empty">${loading ? "일정을 불러오는 중이에요." : "이번 주에 잡힌 일정이 없어요."}</div>`}
+      </section>
+      <section style="display:flex;flex-direction:column;gap:10px">
+        <div class="sec-h"><h2>앞으로 2주</h2><span class="muted small">${mdw(addDays(t,13)).split(" ")[0]}까지</span></div>
+        ${up.length ? `<div class="up">${up.map(e=>upRow(e, e.start < t ? t : e.start)).join("")}</div>`
+          : `<div class="empty">${loading ? "일정을 불러오는 중이에요." : "앞으로 2주 동안 잡힌 일정이 없어요."}</div>`}
+      </section>
+      <section style="display:flex;flex-direction:column;gap:10px">
+        <div class="sec-h"><h2>디데이</h2><button class="btn" data-act="dd-new">＋ 추가</button></div>
+        ${dds.length ? `<div class="dd-list">${dds.map(d=>{
+          const n = diffDays(t, d.date), lbl = n===0 ? "D-day" : n>0 ? "D-"+n : "D+"+(-n);
+          const yr = parseD(d.date).getFullYear() !== parseD(t).getFullYear() ? parseD(d.date).getFullYear()+". " : "";
+          return `<button class="dd ${n<0?"done":n<=7?"hot":""}" data-dd="${esc(d.id)}"><span style="min-width:0"><span class="t">${esc(d.title)}</span><span class="dt">${yr}${mdw(d.date)}</span></span><span class="n">${lbl}</span></button>`;
+        }).join("")}</div>`
+          : `<div class="empty">‘＋ 추가’로 시험, 입사일, 기념일 같은 디데이를 여러 개 넣을 수 있어요.</div>`}
+      </section>
+    </div>
     <div class="foot">교회 분류(선교·예배·섬김·교육·경조사·교제)는 주바시와, 취업 일정은 비전 탐험 프로젝트 트래커와 2시간마다 자동으로 맞춰져요.</div>`;
 }
 
@@ -499,9 +552,11 @@ $("#main").addEventListener("click", e=>{
     if (a.dataset.act==="mon") moveMonth(Number(a.dataset.n));
     else if (a.dataset.act==="mon-today"){ const d = new Date(); S.calY = d.getFullYear(); S.calM = d.getMonth(); S.calSel = todayStr(); render(); }
     else if (a.dataset.act==="ev-new") openEv(null, a.dataset.date);
+    else if (a.dataset.act==="dd-new") openDd(null);
     return;
   }
   const ev = e.target.closest("[data-ev]"); if (ev){ openAny(ev.dataset.ev); return; }
+  const dd = e.target.closest("[data-dd]"); if (dd){ openDd(dd.dataset.dd); return; }
   const day = e.target.closest("[data-day]"); if (day){ S.calSel = day.dataset.day; const d = parseD(S.calSel); if (d.getMonth()!==S.calM){ S.calY = d.getFullYear(); S.calM = d.getMonth(); } render(); }
 });
 /* 달력 좌우로 밀어 달 넘기기 */
@@ -566,6 +621,35 @@ $("#evform").addEventListener("submit", e=>{
   saveNow(id);
   const d = parseD(start); S.calY = d.getFullYear(); S.calM = d.getMonth(); S.calSel = start;
   dlg.close();
+});
+
+/* ---------- 디데이 ---------- */
+const dddlg = $("#dddlg"); let ddEditing = null;
+function openDd(id){
+  ddEditing = id || null; const d = id ? S.docs[id] : null;
+  $("#dd-h").textContent = d ? "디데이 수정" : "디데이 추가";
+  $("#dd-title").value = d?.title || ""; $("#dd-date").value = d?.date || todayStr();
+  $("#dd-err").hidden = true; const del = $("#dd-del"); del.hidden = !d; del.classList.remove("armed"); del.textContent = "삭제";
+  dddlg.showModal(); if (!d) $("#dd-title").focus();
+}
+dddlg.addEventListener("close", ()=>render());
+$("#dd-cancel").addEventListener("click", ()=>dddlg.close());
+$("#dd-del").addEventListener("click", e=>{
+  const b = e.currentTarget;
+  if (!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "정말 삭제"; return; }
+  const old = S.docs[ddEditing] || {};
+  S.docs[ddEditing] = {kind:"dday", deleted:true, title:old.title||"", date:old.date||"", updated:Date.now()};
+  saveNow(ddEditing); dddlg.close();
+});
+$("#ddform").addEventListener("submit", e=>{
+  e.preventDefault();
+  const title = $("#dd-title").value.trim(), date = $("#dd-date").value;
+  const err = m => { $("#dd-err").textContent = m; $("#dd-err").hidden = false; };
+  if (!title) return err("이름을 입력해 주세요.");
+  if (!date) return err("날짜를 골라 주세요.");
+  const id = ddEditing || "dd-" + rid();
+  S.docs[id] = {kind:"dday", title, date, created: S.docs[id]?.created || Date.now(), updated: Date.now()};
+  saveNow(id); dddlg.close();
 });
 
 /* ---------- 설정 · 위젯 ---------- */
