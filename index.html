@@ -76,6 +76,7 @@ main{padding-top:14px;display:flex;flex-direction:column;gap:18px}
 .up{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px}
 .up-row{display:grid;grid-template-columns:62px 10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 8px;border:0;background:transparent;border-radius:8px;text-align:left;width:100%}
 .up-row:hover{background:var(--sunk)}
+.up-row.past{opacity:.45}
 .up-row .d{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.3}
 .up-row .d b{display:block;color:var(--ink);font-weight:600;font-size:13px}
 .up-row .dot{width:10px;height:10px;border-radius:3px;background:var(--c)}
@@ -432,21 +433,27 @@ function render(){
     const more = hidden.map((h,c)=>h ? `<span class="more" style="grid-column:${c+1};grid-row:${nl+2}" aria-hidden="true">+${h}</span>` : "").join("");
     g += `<div class="wk" style="grid-template-rows:${rows}">${days}${heads}${bands}${more}</div>`;
   }
-  const ms = `${y}-${pad(m+1)}-01`, me = ymd(lastDay);
-  const monthEvs = events().filter(e=>e.start<=me && (e.end||e.start)>=ms).sort((a,b)=>sortKey(a).localeCompare(sortKey(b)));
   const selEvs = S.calSel ? evOn(S.calSel) : [];
+  const byStart = (a,b)=>sortKey(a).localeCompare(sortKey(b));
+  /* 이번 주: 오늘이 든 주의 월요일~일요일 */
+  const wkS = addDays(t, -((parseD(t).getDay()+6)%7)), wkE = addDays(wkS, 6);
+  const wkEvs = events().filter(e=>(e.end||e.start)>=wkS && e.start<=wkE).sort(byStart);
   const horizon = addDays(t, 13);
-  const up = events().filter(e=>(e.end||e.start)>=t && e.start<=horizon).sort((a,b)=>sortKey(a).localeCompare(sortKey(b))).slice(0,8);
+  const up = events().filter(e=>(e.end||e.start)>=t && e.start<=horizon).sort(byStart).slice(0,8);
+  const upRow = (e, s)=>{
+    const n = diffDays(t, s), past = (e.end||e.start) < t;
+    const head = n===0?"오늘":n===1?"내일":n===-1?"어제":mdw(s).split(" ")[0];
+    const sub = (n>=-1 && n<=1) ? mdw(s) : WD[parseD(s).getDay()]+"요일";
+    return `<button class="up-row ${past?"past":""}" data-ev="${esc(e.id)}" style="--c:${cv(e.cat)}"><span class="d"><b>${head}</b>${sub}</span><span class="dot"></span>
+      <span class="t">${esc(e.title)}<small>${e.allDay?"종일":esc(e.startTime||"")}${e.place?" · "+esc(e.place):""}</small></span>${dday(e)}</button>`;
+  };
+  const loading = !(S.ready || Object.keys(S.docs).length > 0);
   const legendCats = CATS.filter(c=>F==="all" || c.g===F);
-  const haveAny = Object.keys(S.docs).length > 0;
   $("#main").innerHTML = `
     <section style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec-h"><h2>앞으로 2주</h2><button class="btn primary" data-act="ev-new">＋ 일정 추가</button></div>
-      ${up.length ? `<div class="up">${up.map(e=>{
-        const s = e.start < t ? t : e.start, n = diffDays(t, s);
-        return `<button class="up-row" data-ev="${esc(e.id)}" style="--c:${cv(e.cat)}"><span class="d"><b>${n===0?"오늘":n===1?"내일":mdw(s).split(" ")[0]}</b>${n<=1?mdw(s):WD[parseD(s).getDay()]+"요일"}</span><span class="dot"></span>
-          <span class="t">${esc(e.title)}<small>${e.allDay?"종일":esc(e.startTime||"")}${e.place?" · "+esc(e.place):""}</small></span>${dday(e)}</button>`;}).join("")}</div>`
-        : `<div class="empty">${S.ready || haveAny ? "앞으로 2주 동안 잡힌 일정이 없어요. ‘＋ 일정 추가’로 시험, 약속, 면접 일정을 넣어 보세요." : "일정을 불러오는 중이에요."}</div>`}
+      <div class="sec-h"><h2>이번 주 <span class="muted small" style="font-weight:400">${mdw(wkS)} – ${mdw(wkE)}</span></h2><button class="btn primary" data-act="ev-new">＋ 일정 추가</button></div>
+      ${wkEvs.length ? `<div class="up">${wkEvs.map(e=>upRow(e, e.start < wkS ? wkS : e.start)).join("")}</div>`
+        : `<div class="empty">${loading ? "일정을 불러오는 중이에요." : "이번 주에 잡힌 일정이 없어요."}</div>`}
     </section>
     <section style="display:flex;flex-direction:column;gap:10px">
       <div class="cal-head">
@@ -461,8 +468,9 @@ function render(){
     ${S.calSel ? `<section style="display:flex;flex-direction:column;gap:10px"><div class="sec-h"><h2>${korDate(S.calSel)}${holTag(S.calSel)}</h2><button class="btn" data-act="ev-new" data-date="${S.calSel}">이 날 일정 추가</button></div>
       <div class="evlist">${selEvs.length ? selEvs.map(evCard).join("") : `<div class="empty">이 날은 일정이 없어요.</div>`}</div></section>` : ""}
     <section style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec-h"><h2>${m+1}월 전체 일정</h2><span class="muted small">${monthEvs.length}개${F==="all" ? " · 취업 접수·마감은 취업 탭에서" : ""}</span></div>
-      <div class="evlist">${monthEvs.length ? monthEvs.map(evCard).join("") : `<div class="empty">이번 달 일정이 아직 없어요.</div>`}</div>
+      <div class="sec-h"><h2>앞으로 2주</h2></div>
+      ${up.length ? `<div class="up">${up.map(e=>upRow(e, e.start < t ? t : e.start)).join("")}</div>`
+        : `<div class="empty">${loading ? "일정을 불러오는 중이에요." : "앞으로 2주 동안 잡힌 일정이 없어요."}</div>`}
     </section>
     <div class="foot">교회 분류(선교·예배·섬김·교육·경조사·교제)는 주바시와, 취업 일정은 비전 탐험 프로젝트 트래커와 2시간마다 자동으로 맞춰져요.</div>`;
 }
