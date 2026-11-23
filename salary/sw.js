@@ -1,7 +1,7 @@
 // 급여 자동배분 계산기 오프라인 지원
 // 서버 저장 없이 기기 안에서만 계산한다. 화면 파일은 네트워크 우선, 끊기면 저장해 둔 사본을 쓴다.
-const CACHE = "salary-v1";
-const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
+const CACHE = "salary-v2";
+const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png", "jost-latin-400-normal.woff2", "jost-latin-500-normal.woff2", "jost-latin-700-normal.woff2"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
