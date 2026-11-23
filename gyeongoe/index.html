@@ -1089,7 +1089,21 @@ for (const [id, d] of Object.entries(pending)) putRow(id, d);
 const h0 = (location.hash||"").slice(1); if (PANELS[h0]) S.tab = h0;
 setTab(S.tab);
 setSync(Object.keys(S.docs).length ? "저장된 기록 표시 중" : "불러오는 중…");
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+if ("serviceWorker" in navigator){
+  // 새 버전이 올라오면: 앱을 다시 볼 때마다 확인하고, 바뀌면 입력 중이 아닐 때 한 번 새로고침한다
+  const hadSW = !!navigator.serviceWorker.controller; let reloading = false;
+  const applyUpdate = ()=>{
+    if (reloading) return;
+    const a = document.activeElement;
+    if (a && a.matches && a.matches("textarea, input")){ showNotice('새 디자인·기능이 올라왔어요. <button class="btn" id="upd-go">지금 새로고침</button>'); return; }
+    reloading = true; Object.keys(timers).forEach(saveNow); location.reload();
+  };
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{ if (hadSW) applyUpdate(); });
+  document.addEventListener("click", e=>{ if (e.target.id === "upd-go") applyUpdate(); });
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg=>{
+    document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState === "visible") reg.update().catch(()=>{}); });
+  }).catch(()=>{});
+}
 sb.auth.getSession().then(({data})=>{ if (!data.session) showApp(false); });
 })();
 </script>
