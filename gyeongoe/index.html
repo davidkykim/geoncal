@@ -137,6 +137,8 @@ mark.hl{color:inherit;border-radius:4px;padding:.08em 0;cursor:pointer}
 .passage-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center}
 .paste{display:flex;flex-direction:column;gap:12px}
 .paste ol{margin:0;padding-left:20px;color:var(--muted);font-size:14px}
+.passage .ph{font-weight:700;color:var(--accent-deep,var(--accent))}
+.bible-box{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:var(--r);background:var(--accent-soft)}
 
 /* 섹션 제목과 파스텔 상자 */
 .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:6px}
@@ -308,6 +310,8 @@ dialog::backdrop{background:rgb(8 20 14 / .5)}
     <button class="btn" id="bk-out">백업 파일 저장</button>
     <label class="btn" for="bk-in">백업 불러오기</label>
     <input type="file" id="bk-in" accept="application/json,.json" hidden>
+    <label class="btn" for="bible-in" id="bible-lbl">성경 파일 불러오기</label>
+    <input type="file" id="bible-in" accept=".txt,text/plain" hidden>
     <button class="btn" id="logout">로그아웃</button>
     <span id="bk-msg"></span>
   </div>
@@ -445,18 +449,21 @@ function links(date){
 
 /* ---------- verse numbers + passage render ---------- */
 function verseMarks(t){
-  const re = /(^|[\s\u00a0])(\d{1,3})(?=[\s\u00a0]?[^\d\s.,:;)\]\-])/g; let m, last = null; const res = [];
+  /* "18-19"\ucc98\ub7fc \ub450 \uc808\uc744 \ubb36\uc740 \uc808 \ubc88\ud638\ub3c4 \ud558\ub098\ub85c \ubcf8\ub2e4 */
+  const re = /(^|[\s\u00a0])(\d{1,3})(-\d{1,3})?(?=[\s\u00a0]?[^\d\s.,:;)\]\-])/g; let m, last = null; const res = [];
   while ((m = re.exec(t))){
-    const n = +m[2], s = m.index + m[1].length, e = s + m[2].length;
+    const n = +m[2], s = m.index + m[1].length, e = s + m[2].length + (m[3]||"").length;
     const lineStart = s === 0 || t[s-1] === "\n";
     const ok = last === null ? lineStart : (n === last+1 || n === last+2 || n === 1);
-    if (ok){ res.push([s,e]); last = n; }
+    if (ok){ res.push([s,e]); last = m[3] ? +m[3].slice(1) : n; }
   }
   return res;
 }
-function passageHTML(text, hls){
+function passageHTML(text, hls, heads){
   const L = text.length, pts = new Set([0,L]), vn = verseMarks(text);
   vn.forEach(([s,e])=>{pts.add(s);pts.add(e);});
+  /* 성경 파일에서 불러온 본문은 절 번호 없는 줄(소제목·시편 표제·[n장])을 소제목처럼 보여 준다 */
+  const hd = []; if (heads){ let i = 0; for (const ln of text.split("\n")){ if (ln && !/^\d/.test(ln)){ hd.push([i, i+ln.length]); pts.add(i); pts.add(i+ln.length); } i += ln.length + 1; } }
   const hs = hls.filter(h => h.s < h.e && h.e <= L);
   hs.forEach(h=>{pts.add(h.s);pts.add(h.e);});
   const arr = [...pts].sort((a,b)=>a-b); let out = "";
@@ -464,6 +471,7 @@ function passageHTML(text, hls){
     const a = arr[i], b = arr[i+1]; if (a===b) continue;
     let seg = esc(text.slice(a,b));
     if (vn.some(([s,e])=>s<=a&&e>=b)) seg = `<span class="vn">${seg}</span>`;
+    else if (hd.some(([s,e])=>s<=a&&e>=b)) seg = `<span class="ph">${seg}</span>`;
     const h = [...hs].reverse().find(h=>h.s<=a&&h.e>=b);
     if (h) seg = `<mark class="hl hl-${h.color}" data-hl="${h.id}">${seg}</mark>`;
     out += seg;
@@ -471,6 +479,77 @@ function passageHTML(text, hls){
   return out;
 }
 function cleanPaste(t){ return t.replace(/\r\n?/g,"\n").replace(/[ \t]+\n/g,"\n").replace(/\n{3,}/g,"\n\n").trim(); }
+
+/* ---------- 개역개정 성경 파일 ----------
+   성경 본문은 저작권이 있어 앱(공개 저장소)에 넣지 않는다.
+   사용자가 가진 텍스트 파일("창1:1 <제목> 본문" 형식)을 한 번 불러오면 이 기기의 IndexedDB에 보관하고,
+   날짜별 본문 범위에 맞는 구절을 뽑아 그날 QT의 개역개정 칸에 채운다(채운 본문은 다른 기록처럼 동기화). */
+const ABBR = "창 출 레 민 신 수 삿 룻 삼상 삼하 왕상 왕하 대상 대하 스 느 에 욥 시 잠 전 아 사 렘 애 겔 단 호 욜 암 옵 욘 미 나 합 습 학 슥 말 마 막 눅 요 행 롬 고전 고후 갈 엡 빌 골 살전 살후 딤전 딤후 딛 몬 히 약 벧전 벧후 요일 요이 요삼 유 계".split(" ");
+const BMAP = (()=>{ const m = {}; Object.keys(BOOKS).forEach((k,i)=>{ m[k] = ABBR[i]; m[ABBR[i]] = ABBR[i]; });
+  Object.assign(m, {"룻":"룻","욥":"욥","시":"시","아가서":"아","애가":"애","계시록":"계","출애굽":"출","창세":"창"}); return m; })();
+let BIBLE = null, bibleState = "loading";
+const bibleDB = () => new Promise((res, rej)=>{ const r = indexedDB.open("gyeongoe-bible", 1);
+  r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+async function bibleGet(){ const db = await bibleDB(); return new Promise((res, rej)=>{ const q = db.transaction("kv").objectStore("kv").get("krv"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+async function bibleSet(raw){ const db = await bibleDB(); return new Promise((res, rej)=>{ const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(raw, "krv"); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }
+function parseBible(raw){
+  const B = Object.create(null); let n = 0;
+  for (const line of String(raw).split(/\r?\n/)){
+    const m = /^([가-힣]+)(\d+):(\d+)(?:-(\d+))?(?:\s+(.*))?$/.exec(line.trim()); if (!m || !BMAP[m[1]]) continue;
+    let t = (m[5]||"").trim(), h = "";
+    const mh = /^<([^>]*)>\s*(.*)$/.exec(t); if (mh){ h = mh[1].trim(); t = mh[2]; }
+    (B[m[1]+m[2]] ||= []).push([+m[3], +(m[4]||m[3]), h, t]); n++;
+  }
+  return n > 20000 && B["창1"] && B["계22"] ? B : null;
+}
+/* "고린도후서 6:1-7:1", "시 23", "요 3:16", "약 4:13-5:6", "롬 8:28-39, 9:1" 같은 범위를 장·절 구간으로 */
+function parseRef(ref){
+  let s = (ref||"").replace(/[–—~∼]/g,"-").replace(/(\d+)\s*(장|편)\s*/g,"$1:").replace(/절/g,"").replace(/\s+/g," ").trim();
+  const m = /^([가-힣]+(?: [가-힣]+)*)\s*(\d.*)$/.exec(s); if (!m) return null;
+  const book = BMAP[m[1].replace(/\s/g,"")]; if (!book) return null;
+  const spans = []; let ch = null;
+  for (let seg of m[2].split(/[,;]/)){
+    seg = seg.replace(/\s/g,"").replace(/:$/,""); if (!seg) continue; let x;
+    if ((x = /^(\d+):(\d+)-(\d+):(\d+)$/.exec(seg))){ const [a,b,c,d] = x.slice(1).map(Number);
+      if (c < a) return null; spans.push([a,b,a===c?d:999]); for (let k=a+1;k<c;k++) spans.push([k,1,999]); if (c>a) spans.push([c,1,d]); ch = c; }
+    else if ((x = /^(\d+):(\d+)-(\d+)$/.exec(seg))){ ch = +x[1]; spans.push([ch,+x[2],+x[3]]); }
+    else if ((x = /^(\d+):(\d+)$/.exec(seg))){ ch = +x[1]; spans.push([ch,+x[2],+x[2]]); }
+    else if ((x = /^(\d+)-(\d+)$/.exec(seg))){ if (ch === null){ for (let k=+x[1];k<=+x[2];k++) spans.push([k,1,999]); } else spans.push([ch,+x[1],+x[2]]); }
+    else if ((x = /^(\d+)$/.exec(seg))){ if (ch === null) spans.push([+x[1],1,999]); else spans.push([ch,+x[1],+x[1]]); }
+    else return null;
+  }
+  return spans.length ? {book, spans} : null;
+}
+function bibleText(ref){
+  const p = parseRef(ref); if (!p || !BIBLE) return "";
+  const out = []; let lastCh = null;
+  for (const [c, a, b] of p.spans){
+    const sel = (BIBLE[p.book + c] || []).filter(v => v[1] >= a && v[0] <= b); if (!sel.length) return "";
+    if (lastCh !== null && c !== lastCh) out.push(`[${c}장]`);
+    lastCh = c;
+    for (const [v1, v2, h, t] of sel){ if (h) out.push(h); out.push(`${v1===v2 ? v1 : v1+"-"+v2} ${t}`); }
+  }
+  return out.join("\n");
+}
+/* 본문 칸이 비어 있거나, 전에 자동으로 채운 본문인데 범위가 바뀌었고 칠한 구절이 없으면 범위대로 채운다 */
+function autoKrv(){
+  /* 서버 기록을 다 받기 전에는 채우지 않는다(같은 날짜의 기존 기록을 덮어쓰지 않도록) */
+  if (!BIBLE || !S.ready || S.editSrc === "krv") return;
+  const q = getQT(), r = refOf(); if (!r.ref) return;
+  const cur = q.texts.krv || "", a = (q.auto||{}).krv;
+  if (cur && (!a || a === r.ref || q.hl.some(h=>h.src==="krv"))) return;
+  const t = bibleText(r.ref); if (!t || t === cur) return;
+  mutQT(d=>{ d.texts.krv = t; d.auto = {...(d.auto||{}), krv: r.ref}; });
+}
+function remapHl(d, src, nt){
+  d.hl = d.hl.flatMap(h=>{ if (h.src!==src) return [h]; if (nt.slice(h.s,h.e)===h.text) return [h];
+    const i = nt.indexOf(h.text); return i<0 ? [] : [{...h, s:i, e:i+h.text.length}]; });
+}
+function bibleLabel(){ const l = $("#bible-lbl"); if (l) l.textContent = BIBLE ? "성경 파일 바꾸기" : "성경 파일 불러오기"; }
+async function decodeBible(file){
+  const buf = await file.arrayBuffer();
+  try { return new TextDecoder("utf-8", {fatal:true}).decode(buf); } catch(_){ return new TextDecoder("euc-kr").decode(buf); }
+}
 
 /* ---------- category chips ---------- */
 function chips(key, sel, list = CATS){ return `<div class="chips">${list.map(c=>`<button type="button" class="chip" data-chip="${key}" data-cat="${esc(c)}" aria-pressed="${sel.includes(c)}">${esc(c)}</button>`).join("")}</div>`; }
@@ -611,7 +690,16 @@ function renderLock(){
 
 /* ---------- render: QT ---------- */
 function renderQT(){
+  autoKrv();
   const el = $("#p-qt"), q = getQT(), r = refOf(), L = links(S.date), today = S.date === todayStr();
+  const auto = S.src === "krv" && (q.auto||{}).krv, canRefill = S.src === "krv" && BIBLE && r.ref && auto !== r.ref && !!bibleText(r.ref);
+  const bibleBox = S.src !== "krv" ? "" :
+    !BIBLE ? (bibleState === "loading" ? `<p class="muted small" style="margin:0">성경 파일을 여는 중이에요…</p>` : `
+      <div class="bible-box">
+        <p style="margin:0">개역개정 성경 텍스트 파일을 한 번 불러오면, 날마다 본문 범위에 맞는 말씀이 여기에 저절로 떠요. 파일은 이 기기에만 보관돼요.</p>
+        <label class="btn primary" for="bible-in" style="align-self:flex-start">성경 파일 불러오기</label>
+      </div>`) :
+    r.ref && !bibleText(r.ref) ? `<p class="muted small" style="margin:0">「${esc(r.ref)}」 범위를 성경 파일에서 찾지 못했어요. 범위를 "시편 25:1-22"처럼 적었는지 확인해 주세요.</p>` : "";
   const text = q.texts[S.src] || "", editing = S.editSrc === S.src || !text;
   const srcName = SRC.find(s=>s.k===S.src).n;
   const hls = q.hl.filter(h=>h.src===S.src);
@@ -637,6 +725,7 @@ function renderQT(){
   const tabs = `<div class="src-tabs" role="tablist">${SRC.map(s=>`<button role="tab" data-src="${s.k}" aria-selected="${s.k===S.src}">${s.n}${q.texts[s.k] ? `<span class="dot" aria-label="본문 있음"></span>` : ""}</button>`).join("")}</div>`;
   const body = editing ? `
     <div class="paste">
+      ${bibleBox}
       <ol>
         <li><a href="${L[S.src]}" target="_blank" rel="noopener">${S.src==="krv" ? "매일성경 사이트에서 오늘 본문 열기" : srcName + " 본문 열기"} ↗</a></li>
         <li>본문을 복사해서 아래 칸에 붙여넣고 저장하세요. 그 뒤로는 이 날짜에 계속 남아 있어요.</li>
@@ -647,10 +736,11 @@ function renderQT(){
         ${text ? `<button class="btn ghost" data-act="cancel-text">취소</button>` : ""}
       </div>
     </div>` : `
-    <div class="passage" data-ctx="qt" data-src="${S.src}">${passageHTML(text, hls)}</div>
+    <div class="passage" data-ctx="qt" data-src="${S.src}">${passageHTML(text, hls, !!auto)}</div>
     <div class="passage-tools">
-      <span class="muted small" style="margin-right:auto">본문을 드래그하면 하이라이트를 칠할 수 있어요</span>
+      <span class="muted small" style="margin-right:auto">${auto ? "성경 파일에서 자동으로 불러온 본문이에요. " : ""}본문을 드래그하면 하이라이트를 칠할 수 있어요</span>
       <a class="btn" href="${L.both}" target="_blank" rel="noopener">NIV·현대인의 성경 나란히 ↗</a>
+      ${canRefill ? `<button class="btn" data-act="bible-refill">범위대로 다시 불러오기</button>` : ""}
       <button class="btn ghost" data-act="edit-text">본문 다시 붙여넣기</button>
     </div>`;
 
@@ -848,11 +938,14 @@ document.addEventListener("click", e=>{
     case "save-text": {
       const nt = cleanPaste($("#paste-in").value);
       mutQT(d=>{
-        d.texts[S.src] = nt;
-        d.hl = d.hl.flatMap(h=>{ if (h.src!==S.src) return [h]; if (nt.slice(h.s,h.e)===h.text) return [h];
-          const i = nt.indexOf(h.text); return i<0 ? [] : [{...h, s:i, e:i+h.text.length}]; });
+        d.texts[S.src] = nt; remapHl(d, S.src, nt);
+        if (d.auto && d.auto[S.src] && nt !== bibleText(d.auto[S.src])){ d.auto = {...d.auto}; delete d.auto[S.src]; }
       });
       S.editSrc = null; renderQT(); break; }
+    case "bible-refill": {
+      const r = refOf(), nt = bibleText(r.ref); if (!nt) break;
+      mutQT(d=>{ d.texts.krv = nt; remapHl(d, "krv", nt); d.auto = {...(d.auto||{}), krv: r.ref}; });
+      renderQT(); break; }
     case "del-hl": {
       const ctx = a.dataset.ctx || "qt";
       if (S.armed !== id){ S.armed = id; render(true); break; }
@@ -1053,6 +1146,21 @@ $("#bk-in").addEventListener("change", async e=>{
     $("#bk-msg").textContent = n ? `기록 ${n}개를 불러왔어요.` : "새로 불러올 기록이 없어요. 이미 다 들어 있어요.";
   } catch(_){ $("#bk-msg").textContent = "경외와 거룩 백업 파일이 아니에요. 파일을 다시 골라 주세요."; }
   e.target.value = "";
+});
+const bibleNote = m => { showNotice(esc(m)); setTimeout(()=>{ if ($("#notice").textContent === m) showNotice(""); }, 7000); };
+$("#bible-in").addEventListener("change", async e=>{
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const raw = await decodeBible(f), B = parseBible(raw);
+    if (!B){ bibleNote("성경 파일 형식이 아니에요. \"창1:1 태초에…\"처럼 한 줄에 한 절씩 적힌 텍스트 파일을 골라 주세요."); return; }
+    BIBLE = B; bibleState = "ready"; bibleLabel();
+    try { await bibleSet(raw); bibleNote("성경 파일을 불러왔어요. 이제 날마다 본문 범위의 말씀이 자동으로 떠요."); }
+    catch(_){ bibleNote("성경 파일을 불러왔지만 이 기기에 저장하지 못했어요. 앱을 다시 열면 한 번 더 불러와 주세요."); }
+    if (S.tab === "qt") renderQT();
+  } catch(_){ bibleNote("성경 파일을 읽지 못했어요. 파일을 다시 골라 주세요."); }
+});
+bibleGet().then(raw=>{ BIBLE = raw ? parseBible(raw) : null; }).catch(()=>{}).finally(()=>{
+  bibleState = BIBLE ? "ready" : "none"; bibleLabel(); if (S.tab === "qt") render();
 });
 $("#logout").addEventListener("click", async ()=>{
   if (Object.keys(pending).length && !confirm("아직 서버에 못 보낸 기록이 있어요. 그래도 로그아웃할까요?")) return;

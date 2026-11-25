@@ -1,6 +1,6 @@
 // 경외와 거룩 오프라인 지원: 앱 화면 파일은 네트워크 우선, 끊기면 저장해 둔 사본을 쓴다.
 // 기록 데이터(Supabase)는 여기서 다루지 않는다. 앱이 기기에 따로 저장한다.
-const CACHE = "gyeongoe-v4";
+const CACHE = "gyeongoe-v5";
 const SHELL = ["./", "index.html", "supabase.js", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png", "fonts/levelup-bold.woff2", "fonts/levelup-semibold.woff2"];
 
 self.addEventListener("install", e => {
