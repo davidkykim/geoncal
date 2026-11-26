@@ -171,6 +171,7 @@ mark.hl{color:inherit;border-radius:4px;padding:.08em 0;cursor:pointer}
   background:var(--nav);color:#fff;border-radius:999px;box-shadow:0 10px 30px rgb(10 30 20 / .3);padding:8px 10px 8px 20px}
 .hlbar .in{max-width:740px;margin:0 auto;display:flex;align-items:center;gap:8px}
 .hlbar .pv{flex:1 1 auto;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
+.refbar .btn{background:#fff;color:var(--nav);border:0;font-weight:700;flex:none}
 .swatch{width:36px;height:36px;border-radius:50%;border:2px solid rgb(255 255 255 / .7);padding:0;flex:none}
 
 /* 기도 */
@@ -324,6 +325,13 @@ dialog::backdrop{background:rgb(8 20 14 / .5)}
     <button class="swatch hl-g" data-hlc="g" aria-label="연두로 칠하기"></button>
     <button class="swatch hl-b" data-hlc="b" aria-label="하늘색으로 칠하기"></button>
     <button class="swatch hl-p" data-hlc="p" aria-label="분홍으로 칠하기"></button>
+  </div>
+</div>
+
+<div class="hlbar refbar" id="refbar" hidden>
+  <div class="in">
+    <span class="pv" id="refpv"></span>
+    <button class="btn" id="refgo" type="button">말씀 넣기</button>
   </div>
 </div>
 
@@ -541,6 +549,16 @@ function autoKrv(){
   const t = bibleText(r.ref); if (!t || t === cur) return;
   mutQT(d=>{ d.texts.krv = t; d.auto = {...(d.auto||{}), krv: r.ref}; });
 }
+/* 설교·교육 노트: 본문 칸이 비어 있거나, 전에 자동으로 채운 본문인데 범위가 바뀌었고 칠한 구절이 없으면 범위대로 채운다 */
+function autoNote(id, force){
+  if (!BIBLE || !S.ready) return false;
+  const n = getNote(id); if (!n || !n.ref.trim() || n.type === "book" || n.type === "free") return false;
+  if (!force && n.text && (!n.auto || n.auto === n.ref || n.hl.length)) return false;
+  const t = bibleText(n.ref); if (!t || t === n.text) return false;
+  mutNote(id, d=>{ d.text = t; d.auto = d.ref; if (force) remapHl(d, undefined, t); });
+  if (S.noteEditText === id) S.noteEditText = null;
+  return true;
+}
 function remapHl(d, src, nt){
   d.hl = d.hl.flatMap(h=>{ if (h.src!==src) return [h]; if (nt.slice(h.s,h.e)===h.text) return [h];
     const i = nt.indexOf(h.text); return i<0 ? [] : [{...h, s:i, e:i+h.text.length}]; });
@@ -627,7 +645,8 @@ function renderNotes(type){
     <div class="note card"><h3>카테고리</h3>${chips("note-cat:"+id, n.cats, NCATS)}</div>`;
     return;
   }
-  const ctx = "note:" + id, e = engRef(n.ref);
+  if (autoNote(id)) return renderNotes(type);
+  const ctx = "note:" + id, e = engRef(n.ref), canFill = BIBLE && n.ref.trim() && bibleText(n.ref), refBad = BIBLE && n.ref.trim() && !canFill;
   const bg = v => e ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(e)}&version=${encodeURIComponent(v)}` : "https://www.biblegateway.com/";
   const editing = S.noteEditText === id || !n.text;
   const hls = n.hl.slice().sort((a,b)=>a.s-b.s);
@@ -648,9 +667,12 @@ function renderNotes(type){
     ${type === "book" ? bookQuotes(n, id) : `
     <div class="card" style="display:flex;flex-direction:column;gap:10px">
       <label class="lbl" for="n-ref">본문</label>
-      <input class="field" id="n-ref" data-nf="ref" data-nid="${id}" value="${esc(n.ref)}" placeholder="본문 범위 예) 로마서 8:28-39">
+      <input class="field" id="n-ref" data-nf="ref" data-nid="${id}" value="${esc(n.ref)}" placeholder="본문 범위 예) 로마서 8:28-39" enterkeyhint="done">
       ${editing ? `
         <div class="paste">
+          ${canFill ? `<button class="btn primary" data-act="note-fill" data-nid="${id}" style="align-self:flex-start">개역개정 ${esc(n.ref.trim())} 불러오기</button>`
+            : refBad ? `<p class="muted small" style="margin:0">${parseRef(n.ref) ? "성경 파일에서 이 범위의 말씀을 찾지 못했어요. 장·절을 다시 확인해 주세요." : "본문 범위를 알아보지 못했어요. \"롬 8:28-39\", \"요한복음 3장 16절\"처럼 적어 주세요."}</p>`
+            : !BIBLE && bibleState === "none" ? `<div class="bible-box"><p style="margin:0">성경 파일을 한 번 불러오면, 본문 범위만 적어도 말씀이 저절로 채워져요.</p><label class="btn primary" for="bible-in" style="align-self:flex-start">성경 파일 불러오기</label></div>` : ""}
           <ol>
             ${e ? `<li><a href="${bg("NIV;KLB")}" target="_blank" rel="noopener">NIV·현대인의 성경으로 본문 열기 ↗</a></li>` : ""}
             <li>쓰시는 성경에서 본문을 복사해 붙여넣고 저장하면, 묵상처럼 구절에 색을 칠하고 메모를 달 수 있어요.</li>
@@ -664,6 +686,7 @@ function renderNotes(type){
         <div class="passage" data-ctx="${ctx}">${passageHTML(n.text, hls)}</div>
         <div class="passage-tools">
           <span class="muted small" style="margin-right:auto">본문을 드래그하면 하이라이트를 칠할 수 있어요</span>
+          ${canFill && bibleText(n.ref) !== n.text ? `<button class="btn" data-act="note-fill" data-nid="${id}">범위대로 다시 불러오기</button>` : ""}
           <button class="btn ghost" data-act="note-edit-text" data-nid="${id}">본문 다시 붙여넣기</button>
         </div>`}
     </div>
@@ -975,9 +998,15 @@ document.addEventListener("click", e=>{
       S.armed = null; delDoc(id); S.noteOpen[ty] = null; renderNotes(ty); window.scrollTo(0,0); break; }
     case "note-edit-text": S.noteEditText = a.dataset.nid; render(true); $("#n-paste")?.focus(); break;
     case "note-cancel-text": S.noteEditText = null; render(true); break;
+    case "note-fill": {
+      const nid = a.dataset.nid, r = $("#n-ref"); if (r) mutNote(nid, d=>{ d.ref = r.value; });
+      const n = getNote(nid);
+      if (n.hl.length && n.text && !confirm("칠해 둔 구절 가운데 새 본문에 없는 것은 지워져요. 범위대로 다시 불러올까요?")) break;
+      autoNote(nid, true); render(true); break; }
     case "note-save-text": {
       const nid = a.dataset.nid, nt = cleanPaste($("#n-paste").value);
       mutNote(nid, d=>{
+        if (nt !== d.text) d.auto = null;
         d.text = nt;
         d.hl = d.hl.flatMap(h=>{ if (nt.slice(h.s,h.e)===h.text) return [h]; const i = nt.indexOf(h.text); return i<0 ? [] : [{...h, s:i, e:i+h.text.length}]; });
       });
@@ -993,6 +1022,7 @@ document.addEventListener("click", e=>{
   }
 });
 document.addEventListener("change", e=>{
+  if (e.target.id === "n-ref"){ const nid = e.target.dataset.nid; mutNote(nid, d=>{ d.ref = e.target.value; }); autoNote(nid); render(true); return; }
   if (e.target.id === "qt-date" && e.target.value){ S.date = e.target.value; S.editSrc = null; S.editRef = false; renderQT(); }
 });
 document.addEventListener("input", e=>{
@@ -1017,7 +1047,7 @@ document.addEventListener("input", e=>{
 document.addEventListener("keydown", e=>{
   if (e.isComposing) return;
   if (e.key==="Enter" && !e.shiftKey && e.target.id==="pr-edit"){ e.preventDefault(); $('[data-act="pr-save"]')?.click(); }
-  if (e.key==="Enter" && !e.shiftKey && e.target.matches("[data-add] textarea")){ e.preventDefault(); e.target.form.requestSubmit(); } if (e.key==="Enter" && (e.target.id==="ref-in"||e.target.id==="title-in")){ e.preventDefault(); $('[data-act="save-ref"]')?.click(); } });
+  if (e.key==="Enter" && !e.shiftKey && e.target.matches("[data-add] textarea")){ e.preventDefault(); e.target.form.requestSubmit(); } if (e.key==="Enter" && e.target.id==="n-ref"){ e.preventDefault(); e.target.blur(); } if (e.key==="Enter" && (e.target.id==="ref-in"||e.target.id==="title-in")){ e.preventDefault(); $('[data-act="save-ref"]')?.click(); } });
 document.addEventListener("submit", e=>{
   const f = e.target.closest("[data-add]"); if (!f) return; e.preventDefault();
   const g = f.dataset.add, inp = $("#add-"+g), v = inp.value.trim(), who = g==="intercede" ? ($("#add-who")?.value.trim() || "") : "";
@@ -1049,6 +1079,33 @@ document.addEventListener("input", e=>grow(e.target));
 let growRaf = 0;
 new MutationObserver(()=>{ cancelAnimationFrame(growRaf); growRaf = requestAnimationFrame(()=>growAll()); }).observe($(".wrap"), {childList:true, subtree:true});
 addEventListener("resize", ()=>{ cancelAnimationFrame(growRaf); growRaf = requestAnimationFrame(()=>growAll()); });
+
+/* ---------- 글 속 구절 범위를 블록으로 고르면 말씀 넣기 ----------
+   설교 내용·적용 칸에서 "요 3:16"처럼 적은 부분을 고르면 아래에 버튼이 뜨고, 누르면 그 줄 바로 아래에 본문을 넣는다. */
+const rbar = $("#refbar"); let rpend = null;
+function refSel(){
+  const t = document.activeElement;
+  if (!BIBLE || !t || t.tagName !== "TEXTAREA" || !t.dataset.nf || t.selectionStart === t.selectionEnd){ rpend = null; rbar.hidden = true; return; }
+  const raw = t.value.slice(t.selectionStart, t.selectionEnd), ref = raw.replace(/^[\s(\[「『"'“‘]+|[\s)\]」』"'”’.,]+$/g, "");
+  const txt = ref.length <= 40 && !/\n/.test(ref) ? bibleText(ref) : "";
+  if (!txt){ rpend = null; rbar.hidden = true; return; }
+  rpend = {t, end: t.selectionEnd, txt};
+  $("#refpv").textContent = ref; rbar.hidden = false; bar.hidden = true;
+}
+let refT = 0; const refLater = () => { clearTimeout(refT); refT = setTimeout(refSel, 60); };
+document.addEventListener("selectionchange", refLater);
+["select", "keyup", "mouseup", "touchend"].forEach(ev => document.addEventListener(ev, e=>{ if (e.target.tagName === "TEXTAREA") refLater(); }));
+document.addEventListener("focusout", ()=>setTimeout(()=>{ if (document.activeElement?.tagName !== "TEXTAREA"){ rpend = null; rbar.hidden = true; } }, 200));
+rbar.addEventListener("pointerdown", e=>{
+  if (!e.target.closest("#refgo") || !rpend) return; e.preventDefault();
+  const {t, end, txt} = rpend, v = t.value;
+  let at = v.indexOf("\n", end); if (at < 0) at = v.length;
+  const add = "\n" + txt + (at < v.length ? "" : "\n");
+  t.value = v.slice(0, at) + add + v.slice(at);
+  const caret = at + add.length; t.setSelectionRange(caret, caret);
+  t.dispatchEvent(new Event("input", {bubbles: true}));
+  rpend = null; rbar.hidden = true;
+});
 
 /* ---------- highlighting ---------- */
 const bar = $("#hlbar"); let pend = null, hideT = null;
@@ -1156,11 +1213,11 @@ $("#bible-in").addEventListener("change", async e=>{
     BIBLE = B; bibleState = "ready"; bibleLabel();
     try { await bibleSet(raw); bibleNote("성경 파일을 불러왔어요. 이제 날마다 본문 범위의 말씀이 자동으로 떠요."); }
     catch(_){ bibleNote("성경 파일을 불러왔지만 이 기기에 저장하지 못했어요. 앱을 다시 열면 한 번 더 불러와 주세요."); }
-    if (S.tab === "qt") renderQT();
+    render(true);
   } catch(_){ bibleNote("성경 파일을 읽지 못했어요. 파일을 다시 골라 주세요."); }
 });
 bibleGet().then(raw=>{ BIBLE = raw ? parseBible(raw) : null; }).catch(()=>{}).finally(()=>{
-  bibleState = BIBLE ? "ready" : "none"; bibleLabel(); if (S.tab === "qt") render();
+  bibleState = BIBLE ? "ready" : "none"; bibleLabel(); if (S.tab === "qt" || S.tab === "sermon" || S.tab === "edu") render();
 });
 $("#logout").addEventListener("click", async ()=>{
   if (Object.keys(pending).length && !confirm("아직 서버에 못 보낸 기록이 있어요. 그래도 로그아웃할까요?")) return;
